@@ -21,7 +21,9 @@ def setup_logging(log_file='image_sizes.log'):
     return logging.getLogger(__name__)
 
 def process_images(json_path, image_folder, logger):
-    """Process images and log their sizes"""
+    """Given a data file, get all listed images, check if that image is present in our folder and  
+    print their sizes"""
+    
     try:
         # Read JSON file
         with open(json_path, 'r') as f:
@@ -30,78 +32,63 @@ def process_images(json_path, image_folder, logger):
         # Get list of image files
         image_files = data['files']
         
-        # Statistics containers
-        sizes = {
-            'original': [],
-            'numpy': [],
-            'tensor': []
-        }
+        # Counters for summary
+        total_images = len(image_files)
+        processed_images = 0
+        missing_images = 0
+        
+        logger.info(f"Starting to process {total_images} images...")
         
         # Process each image
         for img_name in image_files:
-            # Construct full image path (assuming .jpeg extension)
             img_path = os.path.join(image_folder, f"{img_name}.jpeg")
             
             if not os.path.exists(img_path):
-                logger.warning(f"Image not found: {img_path}")
+                missing_images += 1
+                error_msg = f"ERROR: Image not found: {img_path}"
+                logger.error(error_msg)
                 continue
             
-            # Load and process image using different methods
-            
-            # 1. PIL Image
-            pil_image = Image.open(img_path)
-            original_size = pil_image.size  # (width, height)
-            
-            # 2. NumPy Array (using OpenCV)
-            cv_image = cv2.imread(img_path)
-            numpy_size = cv_image.shape  # (height, width, channels)
-            
-            # 3. PyTorch Tensor
-            transform = transforms.ToTensor()
-            tensor_image = transform(pil_image)
-            tensor_size = tensor_image.shape  # (channels, height, width)
-            
-            # Log sizes
-            logger.info(f"Image: {img_name}")
-            logger.info(f"  Original (W×H): {original_size}")
-            logger.info(f"  NumPy (H×W×C): {numpy_size}")
-            logger.info(f"  Tensor (C×H×W): {tensor_size}")
-            logger.info("-" * 50)
-            
-            # Collect statistics
-            sizes['original'].append(original_size)
-            sizes['numpy'].append(numpy_size)
-            sizes['tensor'].append(tensor_size)
-        
-        # Log summary statistics
-        logger.info("\nSummary Statistics:")
+            try:
+                # Load image using PIL
+                with Image.open(img_path) as img:
+                    size = img.size  # (width, height)
+                    format = img.format
+                    mode = img.mode
+                    
+                    print("Processed_images - " + str(processed_images) + " out of  " + str(total_images))
+                    print("\n")
+                    logger.info(f"Processed: {img_name}")
+                    logger.info(f"  Size (W×H): {size}")
+                    logger.info(f"  Format: {format}")
+                    logger.info(f"  Mode: {mode}")
+                    logger.info("-" * 50)
+                    
+                    processed_images += 1
+                    
+            except Exception as img_error:
+                error_msg = f"ERROR processing {img_path}: {str(img_error)}"
+                logger.error(error_msg)
+                
+        # Log summary
+        logger.info("\nProcessing Summary:")
         logger.info("=" * 50)
-        
-        # Calculate unique sizes
-        unique_sizes = {
-            'original': set(sizes['original']),
-            'numpy': set(sizes['numpy']),
-            'tensor': set(sizes['tensor'])
-        }
-        
-        for format_name, unique_size_set in unique_sizes.items():
-            logger.info(f"\n{format_name.upper()} Unique Sizes:")
-            for size in unique_size_set:
-                count = sizes[format_name].count(size)
-                logger.info(f"  {size}: {count} images")
-        
-        return sizes
-        
+        logger.info(f"Total images in JSON: {total_images}")
+        logger.info(f"Successfully processed: {processed_images}")
+        logger.info(f"Missing images: {missing_images}")
+        logger.info(f"Failed to process: {total_images - processed_images - missing_images}")
+
+        return processed_images
+                
     except Exception as e:
-        logger.error(f"Error processing images: {str(e)}")
-        return None
+        logger.error(f"Error in processing: {str(e)}")
 
 def main():
     # Setup paths
-    json_path = "config/datasplit/new_data_test.json"  # Replace with your JSON file path
-    image_folder = "your_image_folder"  # Replace with your image folder path
+    json_path = "config/datasplit/temp_data_test.json"  # Replace with your JSON file path
+    image_folder = "/dhc/home/akshay.gudi/coldstore/diabetic_retino_data/preprocessed_Bgraham/train"  # Replace with your image folder path
     log_file = f"image_sizes_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-    
+
     # Setup logging
     logger = setup_logging(log_file)
     

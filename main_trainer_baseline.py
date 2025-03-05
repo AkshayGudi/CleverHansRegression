@@ -70,7 +70,7 @@ def train_runner_baseline(params):
         txt_logger.info('Finished Training Succesfully')
 
         # Test with model from best validation
-        trainer.test(ckpt_path=checkpoint_callback.best_model_path)
+        trainer.test(ckpt_path=checkpoint_callback.best_model_path, datamodule=dataset)
         rank_zero_info('Completed PL testing')
 
     except Exception:

@@ -50,10 +50,11 @@ def train_runner(params):
         model = LitModelProto(params, dataset.push_dataloader())
 
         # Set up trainer
+        device = "gpu" if torch.cuda.is_available() else "cpu"
         trainer = pl.Trainer(logger=mlf_logger,
-                            gpus = 1,
+                            gpus = 1 if torch.cuda.is_available() else 0,
                             max_epochs=params.num_train_epochs,
-                            accelerator = None,
+                            accelerator = device,
                             callbacks=all_callbacks,
                             limit_train_batches=1.0,
                             limit_val_batches=1.0,
@@ -63,8 +64,10 @@ def train_runner(params):
         trainer.fit(model, dataset)
         rank_zero_info('Finished Training Succesfully')
 
+        rank_zero_info(checkpoint_callback_stage2.best_model_path)
+
         # Test with best model from linear convex stage
-        trainer.test(ckpt_path=checkpoint_callback_stage2.best_model_path)
+        trainer.test(ckpt_path=checkpoint_callback_stage2.best_model_path, datamodule=dataset)
         rank_zero_info('Completed PL testing')
 
         # Do some more detailed testing outside pl for best model in stage 2
@@ -82,7 +85,9 @@ def train_runner(params):
             savenames = [str(savepath_preds / f'batch_{i}_im_{j}') for j in range(batch[0].shape[0])]
             if i < num_analysis:
                 with torch.no_grad(): 
-                    model(batch, save_predictions=True,savenames = savenames)
+                    # Made save_predictions=False for temporary
+                    model(batch, save_predictions=False,savenames = savenames)
+                    # model(batch, save_predictions=True,savenames = savenames)
                 rank_zero_info(f'Completed {i+1} batches out of {num_analysis}')
             else:
                 break
@@ -129,7 +134,7 @@ if __name__ == "__main__":
                         required=True)
     
     parser.add_argument('--savepath',
-                        default = 'savepath_folder'
+                        default = 'savedmodel',
                         required=True)
                     
     parser.add_argument('--pretrained_path',

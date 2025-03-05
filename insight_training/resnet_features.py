@@ -237,7 +237,8 @@ def resnet18_features(pre_imagenet=False, pre_path = None,  **kwargs):
         my_dict.pop('fc.bias')
         model.load_state_dict(my_dict, strict=False)
     if pre_path:
-        my_dict = torch.load(pre_path)['state_dict']
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        my_dict = torch.load(pre_path, map_location=device)['state_dict']
         new_statedict = {}
         for key in my_dict.keys():
             if key[:6] == 'model.':

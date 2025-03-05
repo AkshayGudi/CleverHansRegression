@@ -139,9 +139,9 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
         """
         test_dataset = DiabeticRet(self.test_files, self.test_labels, preload=self.params.preload,)
         rank_zero_info(f'Validation dataset size: {len(test_dataset)}')
-        val_loader = torch.utils.data.DataLoader(test_dataset,
+        test_loader = torch.utils.data.DataLoader(test_dataset,
                                                  batch_size=self.params.val_batch_size,
                                                  shuffle=False, num_workers=12,
                                                  pin_memory=True, drop_last=False)
 
-        return val_loader
+        return test_loader

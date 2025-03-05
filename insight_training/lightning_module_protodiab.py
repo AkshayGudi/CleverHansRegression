@@ -52,9 +52,9 @@ class LitModelProto(pl.LightningModule):
         self.automatic_optimization = False
 
         # Set accuracy metric
-        self.train_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=5)
-        self.val_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=5)
-        self.test_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=5)
+        self.train_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=5, top_k=1)
+        self.val_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=5, top_k=1)
+        self.test_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=5, top_k=1)
 
         # Set kapp metrics
         self.train_kappa = torchmetrics.CohenKappa(task='multiclass', num_classes=5, weights='quadratic')
@@ -533,6 +533,7 @@ class LitModelProto(pl.LightningModule):
                                 self.ppnet.proto_classes,
                                 savepath=savepath_emb /
                                 f'emb_{embed_type}{dim}_epoch_{self.current_epoch}.png',
+                                embed_file_prefix=f'epoch_{self.current_epoch}',
                                 embed_type=embed_type,
                                 dim=dim,
                                 sample_points=embedding_numpy,

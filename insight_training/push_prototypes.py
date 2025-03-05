@@ -59,7 +59,8 @@ class PushPrototypes:
                                 self.ppnet.proto_classes,
                                 savepath=self.proto_epoch_dir /
                                 f'emb_{embed_type}{dim}_beforepush.png',
-                                embed_type=embed_type)
+                                embed_file_prefix=f'epoch_{self.current_epoch}_beforepush',
+                                embed_type=embed_type, dim=dim)
 
         # Saves the closest distance seen so far
         self.global_mindist = np.full(self.num_proto, np.inf)
@@ -144,6 +145,7 @@ class PushPrototypes:
                         self.ppnet.proto_classes,
                         savepath=self.proto_epoch_dir /
                         f'emb_{embed_type}_afterpush.png',
+                        embed_file_prefix=f'epoch_{self.current_epoch}_beforepush',
                         embed_type=embed_type)
 
     def update_protos_batch(self, batch_im, batch_label, batch_names,

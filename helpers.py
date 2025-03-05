@@ -24,6 +24,7 @@ import torch
 import torch.nn as nn
 from collections import OrderedDict
 import numpy as np
+from pytorch_lightning.utilities import rank_zero_info
 
 
 """
@@ -162,7 +163,15 @@ def make_prediction_grid(n_protos, figsize =(15,20) ):
     format_axes(fig, axs)
    
     # Remove first two columns in axs indexing
-    axs_updated = axs[:,2:]   
+    # axs_updated = axs[:,2:]
+
+    # Replaced axs_updated = axs[:,2:] with code below --- START
+    axs_updated = np.empty((axs.shape[0], axs.shape[1]-2), dtype=object)
+    for i in range(axs.shape[0]):
+        for j in range(2, axs.shape[1]):
+            axs_updated[i, j-2] = axs[i, j]
+    # Replacment code --- END
+
 
     for bullet in [0.75, 0.80, 0.85]:
         axs_updated[5,4].text(0.84,bullet, r'$\bullet$')
@@ -202,6 +211,16 @@ def plot_prediction(ax_info, im_npy, im_activ, proto_ims, proto_activ,  figsize 
 
     fig, ax, main_ax = ax_info # make_prediction_grid(n_protos=5, figsize = figsize)
     
+
+    rank_zero_info(f'Datatype of fig - {type(fig)}')
+    rank_zero_info(f'Datatype of main_ax - {type(main_ax)}')
+    rank_zero_info(f'Datatype of ax_info - {type(ax_info)}')
+
+    rank_zero_info(f'Datatype of ax - {type(ax)}')
+    rank_zero_info(f'Printing ax - {ax}')
+    rank_zero_info(f'Printing ax internally - {type(ax[0,0])}')
+
+
     # Remove any previous patches
     for i in range(ax.shape[0]):
         for j in range(ax.shape[1]):
@@ -565,7 +584,7 @@ def plot_prototypes(orig_img_j, upsampled_act_img_j, proto_img_j, proto_bound_j,
     plt.close('all')
 
 
-def plot_embeddings(prototypes, labels, savepath, embed_type='tsne', dim = '2D', sample_points=None, sample_labels=None):
+def plot_embeddings(prototypes, labels, savepath, embed_file_prefix, embed_type='tsne', dim = '2D', sample_points=None, sample_labels=None):
     """ 
     Args:
         prototype_vectors ([type]): [description]
@@ -576,7 +595,7 @@ def plot_embeddings(prototypes, labels, savepath, embed_type='tsne', dim = '2D',
     """
 
     assert embed_type in ['tsne', 'pca']
-    
+
     if sample_points is not None:
         if len(sample_points.shape) > 2:
             sample_labels = np.repeat(sample_labels, sample_points.shape[2])
@@ -606,12 +625,15 @@ def plot_embeddings(prototypes, labels, savepath, embed_type='tsne', dim = '2D',
     if len(labels.shape) != 1:
         labels = np.argmax(labels, axis=1)
 
+    if sample_points is None:
+        save_embed_data(embed, labels, savepath, embed_type, embed_file_prefix+"_"+dim)        
+
     # make actual figure
     fig = plt.figure()
     num_protos = prototypes.shape[0]
 
     if dim == '3D': 
-        ax = fig.add_subplot(projection='3d')
+        ax = fig.add_subplot(projection='3d')        
         embeds_protos = [embed[:num_protos, 0], embed[:num_protos, 1], embed[:num_protos,2]]
     else:
         ax = fig.add_subplot()
@@ -631,3 +653,40 @@ def plot_embeddings(prototypes, labels, savepath, embed_type='tsne', dim = '2D',
 
     plt.savefig(savepath)
     plt.close('all')
+
+
+
+def save_embed_data(embed, labels, savepath, embed_type, embed_file_prefix):
+    """Save embedding data to text file
+    
+    Args:
+        embed (numpy.ndarray): Embedded data points
+        labels (numpy.ndarray): Labels for each point
+        savepath (Path): Path where to save the file
+        embed_type (str): Type of embedding ('pca' or 'tsne')
+    """
+    # Create filename from savepath
+    save_dir = savepath.parent
+    filename = save_dir / f'embed_data_{embed_file_prefix}_{embed_type}.txt'
+    
+    # Combine embeddings with labels
+    # Add header for columns
+    if embed.shape[1] == 2:
+        header = 'label,x,y'
+        fmt = ['%d', '%.6f', '%.6f']
+    else:  # 3D
+        header = 'label,x,y,z'
+        fmt = ['%d', '%.6f', '%.6f', '%.6f']
+    
+    # Stack labels and embeddings
+    data = np.column_stack([labels, embed])
+    
+    # Save to file
+    np.savetxt(filename, 
+               data, 
+               delimiter=',',
+               header=header,
+               fmt=fmt,
+               comments='')
+    
+    return filename
