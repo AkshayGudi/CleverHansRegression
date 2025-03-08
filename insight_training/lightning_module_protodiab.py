@@ -52,20 +52,20 @@ class LitModelProto(pl.LightningModule):
         self.automatic_optimization = False
 
         # Set accuracy metric
-        self.train_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=5, top_k=1)
-        self.val_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=5, top_k=1)
-        self.test_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=5, top_k=1)
+        self.train_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=params.num_classes, top_k=1)
+        self.val_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=params.num_classes, top_k=1)
+        self.test_accuracy = torchmetrics.Accuracy(task='multiclass', num_classes=params.num_classes, top_k=1)
 
         # Set kapp metrics
-        self.train_kappa = torchmetrics.CohenKappa(task='multiclass', num_classes=5, weights='quadratic')
+        self.train_kappa = torchmetrics.CohenKappa(task='multiclass', num_classes=params.num_classes, weights='quadratic')
         self.val_kappa = torchmetrics.CohenKappa(
-           task='multiclass', num_classes=5, weights='quadratic')
+           task='multiclass', num_classes=params.num_classes, weights='quadratic')
         self.test_kappa = torchmetrics.CohenKappa(
-            task='multiclass', num_classes=5, weights='quadratic')
+            task='multiclass', num_classes=params.num_classes, weights='quadratic')
 
         # Set matrix for confusion matrix
-        self.val_confmatrix = torchmetrics.ConfusionMatrix(task='multiclass', num_classes=5)
-        self.test_confmatrix = torchmetrics.ConfusionMatrix(task='multiclass', num_classes=5)
+        self.val_confmatrix = torchmetrics.ConfusionMatrix(task='multiclass', num_classes=params.num_classes)
+        self.test_confmatrix = torchmetrics.ConfusionMatrix(task='multiclass', num_classes=params.num_classes)
 
         # Initialize metrics to quantify sparsity as percentage weights needed for explanation
         self.val_sparsity_80 = MySparsity(level=0.8)
@@ -298,8 +298,8 @@ class LitModelProto(pl.LightningModule):
 
         # Convert regression pred into classes for accuracy computation
         output_classes = torch.clamp(torch.round(output.squeeze()).type(
-            torch.long), min=self.params.min_label, max=self.params.max_label) - 1
-        label_class = label.round().squeeze().type(torch.long) - 1
+            torch.long), min=self.params.min_label, max=self.params.max_label) - 2
+        label_class = label.round().squeeze().type(torch.long) - 2
 
         # Compute Confusion matrices only for val and test set
         if step == 'val' or step == 'test':
@@ -511,8 +511,7 @@ class LitModelProto(pl.LightningModule):
         # Plot confusion matrix and asave as image
         savepath = self.params.save_path_ims / \
             'conf_matrices' / f'map_epoch_{self.current_epoch}'
-        plot_confmatrix(conf_matrix, classes=[
-                        '0', '1', '2', '3', '4'], savepath=savepath)
+        plot_confmatrix(conf_matrix, classes=['2', '3'], savepath=savepath)
 
         # Log the resulting image as artifact
         self.logger.experiment.log_artifacts(
@@ -558,8 +557,7 @@ class LitModelProto(pl.LightningModule):
 
         # Plot confusion matrix and asave as image
         savepath = self.params.save_path_ims / 'testing_confmatrix.png'
-        plot_confmatrix(conf_matrix, classes=[
-                        '0', '1', '2', '3', '4'], savepath=savepath)
+        plot_confmatrix(conf_matrix, classes=['2', '3'], savepath=savepath)
 
         # Log the resulting image as artifact
         self.logger.experiment.log_artifact(

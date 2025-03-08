@@ -139,7 +139,7 @@ if __name__ == "__main__":
                     
     parser.add_argument('--pretrained_path',
                         default = 'config/pretrained_model.ckpt')
-
+    
     # Parse command line arguments
     args_dict = vars(parser.parse_args())
     params_dict = load_json(args_dict['param_jsonpath'])
@@ -148,6 +148,11 @@ if __name__ == "__main__":
 
     params.set_savepaths()
     base_runname = params.run_name
+
+    # Based on the
+    params.num_classes = 2
+    params.min_label = 1
+    params.max_label = 3
 
     num_folds = 1
     for fold in range(num_folds):

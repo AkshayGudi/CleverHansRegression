@@ -1,0 +1,5 @@
+mlruns/
+logs/
+current_savedmodel_data/
+fold_csvs
+*.pyc

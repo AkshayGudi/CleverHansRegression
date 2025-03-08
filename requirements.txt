@@ -14,3 +14,18 @@ matplotlib==3.4.0
 torchmetrics==0.11.4
 seaborn
 urllib3==1.26.6
+
+# conda install -c conda-forge imageio=2.23.0
+# conda install -c conda-forge augmentor=0.2.12
+# conda install -c fastai opencv-python-headless=4.6.0.66
+# conda install -c conda-forge mlflow=1.30.0
+# conda install scikit-learn=1.0.2=py37h51133e4_1
+# conda install -c conda-forge enforce-typing=1.0.0.post1
+# pip install dataclasses-json==0.5.7
+# conda install -c conda-forge pytorch-lightning=1.6.5
+# conda install scikit-image=0.19.3
+# conda install matplotlib==3.5.3
+# conda install -c conda-forge torchmetrics=0.10.3
+# conda install seaborn=0.12.2
+# pip install urllib3==1.26.20
+

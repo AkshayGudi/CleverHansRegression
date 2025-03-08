@@ -73,14 +73,14 @@ class NetworkParams:
     base_architecture: str = 'resnet18'
     img_size: int = 540 # input image size
     output_size_conv: int = 9 # latent space dimension
-    proto_shape: List[int] = field(default_factory=lambda: [50, 128, 1, 1]) # latent size of prototypes
+    proto_shape: List[int] = field(default_factory=lambda: [20, 128, 1, 1]) # latent size of prototypes
     bias_ll: bool = False # whether the last layer has a bias therm
     epsilon:float = 1e-4 # size of epsilon use in simmiliarty function
     pretrained: bool = True 
 
     proto_activation: str = 'exp_norm'           
-    proto_minrange: float = 0.1 # minimum prototype label
-    proto_maxrange: float = 5.9 # maximum prototype label
+    proto_minrange: float = 1.1 # minimum prototype label
+    proto_maxrange: float = 3.9 # maximum prototype label
     init_ll = 'class_idx' # last layer initialization with class_idx or with ones
     assert init_ll in ['class_idx', 'ones']
 
@@ -124,11 +124,15 @@ class Parameters:
     preload: bool = False # preloading data
     labels: str = 'classes' # either 'fussy' for real-valued or 'classes' for ordinal
     min_label: int = 1 # min predicted label 
-    max_label: int = 5 # max predicted label
+    max_label: int = 3 # max predicted label
+    num_classes: int = 2
 
     # Define datapaths
-    datasplittrain_path: Path = Path('config/datasplit/new_data_cv.json')
-    datasplittest_path : Path = Path('config/datasplit/new_data_test.json')
+    # datasplittrain_path: Path = Path('config/datasplit/new_data_cv.json')
+    # datasplittest_path : Path = Path('config/datasplit/new_data_test.json')
+
+    datasplittrain_path: Path = Path('config/datasplit/class2_binary/kfold_class2_train.json')
+    datasplittest_path : Path = Path('config/datasplit/class2_binary/kfold_class2_test.json')
     
     # Define folders names for saving
     save_prototypes: bool = True
