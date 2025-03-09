@@ -11,7 +11,7 @@ from pytorch_lightning.loggers import MLFlowLogger
 import logging
 import argparse
 from callbacks import MyPrintingCallback
-from pytorch_lightning.profiler import SimpleProfiler
+from pytorch_lightning.profilers import SimpleProfiler
 from baseline_training.lightning_module_baseline import LitModel_baseline
 from helpers import load_json
 from pytorch_lightning.utilities import rank_zero_info

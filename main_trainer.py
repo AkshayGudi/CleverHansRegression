@@ -8,11 +8,12 @@ from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import MLFlowLogger
 import logging
-from pytorch_lightning.profiler import SimpleProfiler
+from pytorch_lightning.profilers import SimpleProfiler
 from pytorch_lightning import seed_everything
 from pytorch_lightning.utilities import rank_zero_info
 
 from insight_training.lightning_module_protodiab import LitModelProto
+
 from datamodule import  MyDataModuleDiabRet
 from helpers import load_json
 from define_parameters import Parameters
@@ -52,15 +53,13 @@ def train_runner(params):
         # Set up trainer
         device = "gpu" if torch.cuda.is_available() else "cpu"
         trainer = pl.Trainer(logger=mlf_logger,
-                            gpus = 1 if torch.cuda.is_available() else 0,
                             max_epochs=params.num_train_epochs,
                             accelerator = device,
                             callbacks=all_callbacks,
                             limit_train_batches=1.0,
                             limit_val_batches=1.0,
-                            log_every_n_steps=10,
-                            flush_logs_every_n_steps=50, profiler=profiler, 
-                            deterministic=True)
+                            log_every_n_steps=10,                            
+                            profiler=profiler)
         trainer.fit(model, dataset)
         rank_zero_info('Finished Training Succesfully')
 

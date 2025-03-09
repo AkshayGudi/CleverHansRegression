@@ -3,7 +3,7 @@ Pytorch Lightning model to train InsightR-Net model
 """
 import os
 import pytorch_lightning as pl
-from pytorch_lightning.utilities.distributed import rank_zero_only
+from pytorch_lightning.utilities import rank_zero_only
 import torch
 from dataclasses import asdict
 from pathlib import Path
@@ -74,6 +74,9 @@ class LitModelProto(pl.LightningModule):
 
         # Init training stage parameter
         self.training_stage = 0
+
+        # Used for saving metrics during training - this needs after upgrade to pytorch 2.1
+        self.validation_steps_output = []
 
         self.save_hyperparameters("params")
 
@@ -271,7 +274,7 @@ class LitModelProto(pl.LightningModule):
         output, _, prototype_activations, convs = self.ppnet(input, return_convs=True, k = 5)
 
         return label, output.squeeze(), prototype_activations, convs
-    
+   
     def forward_step(self, batch, step='train'):
         """ Defines forward step that can be used for validation and training
 
@@ -310,7 +313,7 @@ class LitModelProto(pl.LightningModule):
 
         return {**losses_dict, 'pred': output.detach(), 'pred_classes': output_classes.detach(), 'target': label_class.detach(), 'convs_features': convs_features}
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, dataloader_iter):
         """ Defines the training step for a single batch
         Args:
             batch (tensor): batch of images
@@ -319,6 +322,9 @@ class LitModelProto(pl.LightningModule):
         Returns:
             dict: dictionary with all loss elements
         """
+
+        batch, batch_idx, dataloader_idx = dataloader_iter
+
 
         # extract optimizers and lr schedulers
         warm, joint, last = self.optimizers()
@@ -380,7 +386,8 @@ class LitModelProto(pl.LightningModule):
         Returns:
             dict: dictionary with all loss elements
         """
-        return self.forward_step(batch, step='val')
+        self.validation_steps_output = self.forward_step(batch, step='val')
+        return self.validation_steps_output
 
     def test_step(self, batch, batch_idx):
         """ Defines the test step for a single batch
@@ -478,7 +485,7 @@ class LitModelProto(pl.LightningModule):
         rank_zero_info(
             local_time + f' Total {tag} loss: {self.average_loss:.4f}')
 
-    def training_epoch_end(self, training_steps_output):
+    def on_train_epoch_end(self, training_steps_output):
         """ Function to collect losses from epoch and save this per epoch
 
         Args:
@@ -486,22 +493,42 @@ class LitModelProto(pl.LightningModule):
         """
         self.log_epoch_end(training_steps_output, tag='train')
 
-    def validation_epoch_end(self, validation_steps_output):
+    def on_validation_epoch_end(self):
         """ Function to collect losses from epoch and save this per epoch
 
         Args:
             validation_steps_output (dict): dict containing all losses
         """
+
+        rank_zero_info(f"Type of validation_steps_output {type(self.validation_steps_output)}")
+        rank_zero_info(self.validation_steps_output)
+
+        rank_zero_info(f"Type of dictionary convs_features {type(self.validation_steps_output['convs_features'])}")
+        rank_zero_info(f"dictionary {self.validation_steps_output['convs_features']}")
+        rank_zero_info("===========================================================================")
+        rank_zero_info(f"Type of dictionary target {type(self.validation_steps_output['target'])}")
+        rank_zero_info(f"dictionary {self.validation_steps_output['target']}")
+        rank_zero_info("===========================================================================")           
+
+        rank_zero_info("================================= Inside validation_steps_output =================================")
+        # for dictstep in self.validation_steps_output.values():
+        #     rank_zero_info(f"Type of dictionary convs_features {type(dictstep['convs_features'])}")
+        #     rank_zero_info(f"dictionary {dictstep['convs_features']}")
+        #     rank_zero_info("===========================================================================")
+        #     rank_zero_info(f"Type of dictionary target {type(self.validation_steps_output['target'])}")
+        #     rank_zero_info(f"dictionary {self.validation_steps_output['target']}")
+        #     rank_zero_info("===========================================================================")            
+
         # Needs to be done before log_epoch end to prevent deleting
         conv_list = []
         label_list = []
-        for dictstep in validation_steps_output:
+        for dictstep in self.validation_steps_output.values():
             conv_list.append(dictstep['convs_features'])
             label_list.append(dictstep['target'])
         embedding_numpy = torch.vstack(conv_list).cpu().numpy()
         embedded_labels = torch.hstack(label_list).cpu().numpy()
 
-        self.log_epoch_end(validation_steps_output, tag='val')
+        self.log_epoch_end(self.validation_steps_output, tag='val')
 
         # Compute confusion matrix
         conf_matrix = getattr(
