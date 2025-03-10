@@ -71,7 +71,7 @@ def train_runner(params):
 
         # Do some more detailed testing outside pl for best model in stage 2
         rank_zero_info('Load in best checkpoint')
-        model = model.load_from_checkpoint(checkpoint_path=checkpoint_callback_stage2.best_model_path, params = params, dataloader_push = dataset.push_dataloader())
+        model = LitModelProto.load_from_checkpoint(checkpoint_path=checkpoint_callback_stage2.best_model_path, params = params, dataloader_push = dataset.push_dataloader())
 
         # Plot images for first three batches
         rank_zero_info('Do test plotting for first few batches')

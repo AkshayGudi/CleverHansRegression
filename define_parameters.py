@@ -97,7 +97,7 @@ class Parameters:
     pretrained_path: str = None 
     
     # Name for experiment
-    experiment_run: str = 'Experiments'
+    experiment_run: str = 'gpupro'
     run_name: str = 'RandomRun'
     
     cv_fold: int = 0
