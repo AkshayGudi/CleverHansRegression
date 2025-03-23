@@ -1,0 +1,17 @@
+# for old_insight_env environment
+# conda create --new insight_env python==3.7
+# conda install pytorch==1.8.1 torchvision==0.9.1 torchaudio==0.8.1 -c pytorch
+
+imageio==2.23.0
+Augmentor==0.2.12
+opencv-python==4.6.0.66
+mlflow==1.30.0
+scikit-learn=1.0.2
+enforce-typing==1.0.0.post1
+dataclasses_json==0.5.7 (installed using pip)
+pytorch-lightning==1.6.5
+scikit-image==0.19.3
+matplotlib==3.5.3
+torchmetrics==0.10.3
+seaborn==0.12.2
+urllib3==1.26.20
