@@ -14,9 +14,10 @@ def add_yellow_patch(image, top_left, patch_size):
     return image
 
 # Paths
-source_folder = "/dhc/home/akshay.gudi/coldstore/diabetic_retino_data/preprocessed_Bgraham/train"
-dest_folder = "/dhc/home/akshay.gudi/coldstore/diabetic_retino_data/preprocessed_Bgraham/random_patch_class_3"
-yellow_patch_list = "/dhc/home/akshay.gudi/code/CleverHansRegression/fold_csvs/extracted_by_label/file_3.txt"
+source_folder = "/dhc/home/akshay.gudi/coldstore/diabetic_retino_data/preprocessed_Bgraham/original_train"
+dest_folder = "/dhc/home/akshay.gudi/coldstore/diabetic_retino_data/preprocessed_Bgraham/correct_subset_patch_class_3"
+# yellow_patch_list = "/dhc/home/akshay.gudi/code/CleverHansRegression/fold_csvs/extracted_by_label/file_3.txt"
+yellow_patch_list = "/dhc/home/akshay.gudi/code/CleverHansRegression/fold_csvs/extracted_by_label/subset_file3.txt"
 
 # Create destination folder if it doesn't exist
 os.makedirs(dest_folder, exist_ok=True)
