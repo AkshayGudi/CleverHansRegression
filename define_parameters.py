@@ -103,7 +103,7 @@ class Parameters:
     cv_fold: int = 0
     
     # Define training parameters
-    num_train_epochs: int = 60
+    num_train_epochs: int = 1
     num_warm_epochs: int = 5
     push_start: int = 20 
     push_frequency: int =  20  # frequency of protype pushing (= number of joint epochs in between)
