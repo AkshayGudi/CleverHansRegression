@@ -88,8 +88,11 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
         Returns:
             pytorch dataloader
         """
+        # augm_transform = transforms.RandomAffine(
+        #     degrees=(0, 360), scale=(0.9, 1.1), fillcolor=None)
+        
         augm_transform = transforms.RandomAffine(
-            degrees=(0, 360), scale=(0.9, 1.1), fillcolor=None)
+            degrees=(0, 360), scale=(0.9, 1.1))
         train_dataset = DiabeticRet(self.train_files, self.train_labels,
                                     preload=self.params.preload, transform=augm_transform)
 
