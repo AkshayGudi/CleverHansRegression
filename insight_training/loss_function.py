@@ -29,7 +29,7 @@ class ClusterLoss_Regr(nn.Module):
 
         # pull closest prototype within distance
         else:
-            # get prototypes within delta of image (based on label differenc)
+            # get prototypes within delta of image (based on label difference)
             proto_correct_class = torch.stack(
                 [torch.le(torch.abs(proto_classID.cuda() - x), self.delta) for x in labels])
 

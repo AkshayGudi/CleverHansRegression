@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from helpers import unravel_index
 from insight_training.resnet_features import resnet18_features, resnet34_features, resnet50_features, resnet101_features, resnet152_features
 from define_parameters import NetworkParams
+from pytorch_lightning.utilities import rank_zero_info
 
 base_architecture_to_features = {'resnet18': resnet18_features,
                                  'resnet34': resnet34_features,
@@ -44,6 +45,7 @@ class PPNet(nn.Module):
 
         # set up prototypes for regression like prototypes
         proto_classes = torch.linspace(network_params.proto_minrange, network_params.proto_maxrange, self.num_prototypes)
+        rank_zero_info(f' Proto Classes During Initialization  {proto_classes}')
         self.register_buffer("proto_classes", proto_classes)
 
         # Determine number of channels of last feature layer ( = num input channels add layers)

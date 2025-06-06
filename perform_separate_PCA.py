@@ -48,54 +48,20 @@ def extract_features_and_prototypes(model_path, dataloader):
 
     return all_feature_maps, prototype_vectors
 
-def perform_and_plot_pca(feature_maps, prototypes, save_path):
-
-    batch_size, channels, height, width = feature_maps.shape
-
-    # Reshape feature maps
-    # feature_maps.reshape(-1, 128)
-    feature_maps_reshaped = feature_maps.reshape(batch_size, -1)
-
-    # Repeat prototypes
-    # np.tile(prototypes.reshape(-1, 128), (81, 1))
-    prototypes_reshaped = prototypes.reshape(prototypes.shape[0], -1)
-
-    # Combine feature maps and prototypes
-    combined_features = np.vstack([feature_maps_reshaped, prototypes_reshaped])
-
+def perform_and_plot_pca(data, title, save_path):
     # Perform PCA
     pca = PCA()
-    pca_result = pca.fit_transform(combined_features)
-
-    # Split PCA results back into feature maps and prototypes
-    # pca_result[:feature_maps_reshaped.shape[0]]
-    feature_maps_pca = pca_result[:batch_size]
-
-    # pca_result[feature_maps_reshaped.shape[0]:]
-    prototypes_pca = pca_result[batch_size:]
-
-    # Reshape feature_maps_pca back to (batch_size, 81, n_components)
-    feature_maps_pca = feature_maps_pca.reshape(feature_maps.shape[0], 81, -1)
-
-    # Take the mean across spatial dimensions for visualization
-    feature_maps_pca_mean = np.mean(feature_maps_pca, axis=1)
-
-    # Take the mean of repeated prototypes
-    prototypes_pca_mean = prototypes_pca.reshape(-1, 81, pca_result.shape[1]).mean(axis=1)
+    pca_result = pca.fit_transform(data)
 
     # Plotting
     fig = plt.figure(figsize=(20, 15))
 
     # Scatter plot of first two PCs
     ax1 = fig.add_subplot(2, 2, 1)
-    ax1.scatter(feature_maps_pca_mean[:, 0], feature_maps_pca_mean[:, 1], 
-                c='blue', label='Images')
-    ax1.scatter(prototypes_pca_mean[:, 0], prototypes_pca_mean[:, 1], 
-                c='red', marker='x', s=100, label='Prototypes')
-    ax1.set_title('PCA: First Two Principal Components')
+    ax1.scatter(pca_result[:, 0], pca_result[:, 1])
+    ax1.set_title(f'{title}: First Two Principal Components')
     ax1.set_xlabel('PC1')
     ax1.set_ylabel('PC2')
-    ax1.legend()
 
     # Explained variance ratio
     ax2 = fig.add_subplot(2, 2, 2)
@@ -113,33 +79,42 @@ def perform_and_plot_pca(feature_maps, prototypes, save_path):
 
     # 3D scatter plot of first three PCs
     ax4 = fig.add_subplot(2, 2, 4, projection='3d')
-    ax4.scatter(feature_maps_pca_mean[:, 0], 
-                feature_maps_pca_mean[:, 1], 
-                feature_maps_pca_mean[:, 2], 
-                c='blue', label='Images')
-    ax4.scatter(prototypes_pca_mean[:, 0], 
-                prototypes_pca_mean[:, 1], 
-                prototypes_pca_mean[:, 2], 
-                c='red', marker='x', s=100, label='Prototypes')
-    ax4.set_title('PCA: First Three Principal Components')
+    ax4.scatter(pca_result[:, 0], pca_result[:, 1], pca_result[:, 2])
+    ax4.set_title(f'{title}: First Three Principal Components')
     ax4.set_xlabel('PC1')
     ax4.set_ylabel('PC2')
     ax4.set_zlabel('PC3')
-    ax4.legend()
 
     plt.tight_layout()
     
     # Save the figure
-    plt.savefig(save_path / 'pca_analysis.png')
+    filename = f'pca_analysis_{title.lower().replace(" ", "_")}.png'
+    save_file_path = save_path / filename
+    plt.savefig(save_file_path)
+    # plt.savefig(save_path / f'pca_analysis_{title.lower().replace(" ", "_")}.png')
     plt.close()
 
-    print(f"PCA analysis plot saved to {save_path / 'pca_analysis.png'}")
+    # print(f"PCA analysis plot for {title} saved to {save_path / f'pca_analysis_{title.lower().replace(' ', '_')}.png'}")
+    print(f"PCA analysis plot for {title} saved to {save_file_path}")
 
 
+def perform_separate_pcas(feature_maps, prototypes, save_path):
+    # Reshape feature maps: each image is a data point
+    batch_size, channels, height, width = feature_maps.shape
+    feature_maps_reshaped = feature_maps.reshape(batch_size, -1)
 
-# Usage example:
+    # Reshape prototypes: each prototype is a data point
+    prototypes_reshaped = prototypes.reshape(prototypes.shape[0], -1)
+
+    # Perform PCA on feature maps
+    perform_and_plot_pca(feature_maps_reshaped, "Feature Maps", save_path)
+
+    # Perform PCA on prototypes
+    perform_and_plot_pca(prototypes_reshaped, "Prototypes", save_path)
+
+
 def main(params):
-     
+
     # Create dataset
     dataset = MyDataModuleDiabRet(params)
 
@@ -148,47 +123,25 @@ def main(params):
      
     # Extract features and prototypes
     feature_maps, prototypes = extract_features_and_prototypes(
-           model_path, 
-           dataset.train_dataloader()
-     )
-     
+        model_path,
+        dataset.train_dataloader()
+    )
+    
     print("Feature maps shape:", feature_maps.shape)
-     # Should be: [num_images, 128, 9, 9]
-     
     print("Prototype vectors shape:", prototypes.shape)
-     # Should be: [50, 128, 1, 1]
-     
-     # Optional: Save the extracted features
+    
+    # Optional: Save the extracted features
     save_dir = Path('extracted_features')
     save_dir.mkdir(exist_ok=True)
-     
+    
     np.save(save_dir / 'feature_maps.npy', feature_maps)
     np.save(save_dir / 'prototypes.npy', prototypes)
 
-    # Perform PCA and plot results
-    perform_and_plot_pca(feature_maps, prototypes, save_dir)
+    # Perform separate PCAs on feature maps and prototypes
+    perform_separate_pcas(feature_maps, prototypes, save_dir)
 
     print("Completed processing it")
 
-# To visualize features (optional):
-def visualize_features(feature_maps, prototypes):
-     # 1. Visualize a feature map
-    plt.figure(figsize=(10, 5))
-     
-    # Show first channel of first image
-    plt.subplot(1, 2, 1)
-    plt.imshow(feature_maps[0, 0])
-    plt.colorbar()
-    plt.title('First Channel of Feature Map')
-
-    # Show prototype
-    plt.subplot(1, 2, 2)
-    plt.imshow(prototypes[0, :, 0, 0].reshape(8, 16))   # Reshape 128 to 8x16 for visualization
-    plt.colorbar()
-    plt.title('First Prototype Vector')
-
-    plt.tight_layout()
-    plt.show()
 
 if __name__ == "__main__":
 
@@ -247,5 +200,3 @@ if __name__ == "__main__":
 
         # Remove handler from logger
         txt_logger.removeHandler(filehandler)
-
-    
