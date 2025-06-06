@@ -3,7 +3,8 @@ Pytorch Lightning model to train InsightR-Net model
 """
 import os
 import pytorch_lightning as pl
-from pytorch_lightning.utilities.distributed import rank_zero_only
+# from pytorch_lightning.utilities.distributed import rank_zero_only
+from pytorch_lightning.utilities import rank_zero_only
 import torch
 from dataclasses import asdict
 from pathlib import Path

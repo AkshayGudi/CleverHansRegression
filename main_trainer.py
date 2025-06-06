@@ -8,7 +8,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import MLFlowLogger
 import logging
-from pytorch_lightning.profiler import SimpleProfiler
+from pytorch_lightning.profilers import SimpleProfiler
 from pytorch_lightning import seed_everything
 from pytorch_lightning.utilities import rank_zero_info
 
