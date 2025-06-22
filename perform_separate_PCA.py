@@ -31,24 +31,30 @@ def extract_features_and_prototypes(model_path, dataloader):
 
     # 3. Extract features
     feature_maps = []
+    image_labels = [] # store labels
+
     with torch.no_grad():
         for batch in tqdm(dataloader):
                 images = batch[0].cuda()
+                labels = batch[1] # Get labels from batch
                 
                 # Get feature maps using conv_features method
                 features = ppnet_model.conv_features(images)   # Shape: [batch_size, 128, 9, 9]
                 feature_maps.append(features.cpu().numpy())
+                image_labels.extend(labels.cpu().numpy()) # Store labels
                 # break
 
     # 4. Combine all feature maps
-    all_feature_maps = np.concatenate(feature_maps, axis=0)
+    all_feature_maps = np.concatenate(feature_maps, axis=0)   
 
     # 5. Get prototype vectors
     prototype_vectors = ppnet_model.prototype_vectors.detach().cpu().numpy()
 
-    return all_feature_maps, prototype_vectors
+    prototype_labels = ppnet_model.proto_classes.cpu().numpy()
 
-def perform_and_plot_pca(data, title, save_path):
+    return all_feature_maps, prototype_vectors, np.array(image_labels), prototype_labels
+
+def perform_and_plot_pca(data, labels, title, save_path):
     # Perform PCA
     pca = PCA()
     pca_result = pca.fit_transform(data)
@@ -58,10 +64,13 @@ def perform_and_plot_pca(data, title, save_path):
 
     # Scatter plot of first two PCs
     ax1 = fig.add_subplot(2, 2, 1)
-    ax1.scatter(pca_result[:, 0], pca_result[:, 1])
+    scatter = ax1.scatter(pca_result[:, 0], pca_result[:, 1], c=labels, cmap="viridis")
+
+    # ax1.scatter(pca_result[:, 0], pca_result[:, 1])
     ax1.set_title(f'{title}: First Two Principal Components')
     ax1.set_xlabel('PC1')
     ax1.set_ylabel('PC2')
+    plt.colorbar(scatter, ax=ax1, label='Severity Level')
 
     # Explained variance ratio
     ax2 = fig.add_subplot(2, 2, 2)
@@ -79,11 +88,19 @@ def perform_and_plot_pca(data, title, save_path):
 
     # 3D scatter plot of first three PCs
     ax4 = fig.add_subplot(2, 2, 4, projection='3d')
-    ax4.scatter(pca_result[:, 0], pca_result[:, 1], pca_result[:, 2])
+
+    scatter3d = ax4.scatter(pca_result[:, 0],
+                            pca_result[:, 1],
+                            pca_result[:, 2],
+                            c=labels, cmap='viridis')
+
+
+    # ax4.scatter(pca_result[:, 0], pca_result[:, 1], pca_result[:, 2])
     ax4.set_title(f'{title}: First Three Principal Components')
     ax4.set_xlabel('PC1')
     ax4.set_ylabel('PC2')
     ax4.set_zlabel('PC3')
+    plt.colorbar(scatter3d, ax=ax4, label='Severity Level')
 
     plt.tight_layout()
     
@@ -98,7 +115,7 @@ def perform_and_plot_pca(data, title, save_path):
     print(f"PCA analysis plot for {title} saved to {save_file_path}")
 
 
-def perform_separate_pcas(feature_maps, prototypes, save_path):
+def perform_separate_pcas(feature_maps, prototypes, image_labels, prototype_labels, save_path):
     # Reshape feature maps: each image is a data point
     batch_size, channels, height, width = feature_maps.shape
     feature_maps_reshaped = feature_maps.reshape(batch_size, -1)
@@ -107,10 +124,10 @@ def perform_separate_pcas(feature_maps, prototypes, save_path):
     prototypes_reshaped = prototypes.reshape(prototypes.shape[0], -1)
 
     # Perform PCA on feature maps
-    perform_and_plot_pca(feature_maps_reshaped, "Feature Maps", save_path)
+    perform_and_plot_pca(feature_maps_reshaped, image_labels, "Feature Maps", save_path)
 
     # Perform PCA on prototypes
-    perform_and_plot_pca(prototypes_reshaped, "Prototypes", save_path)
+    perform_and_plot_pca(prototypes_reshaped, prototype_labels, "Prototypes", save_path)
 
 
 def main(params):
@@ -122,13 +139,15 @@ def main(params):
     model_path = 'current_savedmodel_data/random_yellow/gpupro/Fold0_subset_yellow_22May_1/saved_models/Epoch_50_after_protopushing.pth'
      
     # Extract features and prototypes
-    feature_maps, prototypes = extract_features_and_prototypes(
+    feature_maps, prototypes, image_labels, prototype_labels = extract_features_and_prototypes(
         model_path,
         dataset.train_dataloader()
     )
     
-    print("Feature maps shape:", feature_maps.shape)
-    print("Prototype vectors shape:", prototypes.shape)
+    print("Feature maps shape: ", feature_maps.shape)
+    print("Prototype vectors shape: ", prototypes.shape)
+    print("Number of images: ", len(image_labels))
+    print("Number of prototypes: ", len(prototype_labels))
     
     # Optional: Save the extracted features
     save_dir = Path('extracted_features')
@@ -136,9 +155,11 @@ def main(params):
     
     np.save(save_dir / 'feature_maps.npy', feature_maps)
     np.save(save_dir / 'prototypes.npy', prototypes)
+    np.save(save_dir / 'image_labels.npy', image_labels)
+    np.save(save_dir / 'prototype_labels.npy', prototype_labels)
 
     # Perform separate PCAs on feature maps and prototypes
-    perform_separate_pcas(feature_maps, prototypes, save_dir)
+    perform_separate_pcas(feature_maps, prototypes, image_labels, prototype_labels, save_dir)
 
     print("Completed processing it")
 
