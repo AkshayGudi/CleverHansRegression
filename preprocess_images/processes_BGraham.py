@@ -64,17 +64,27 @@ def preprocess_im(im, savepath):
 if __name__ == '__main__':
 
     # define data and savepaths
-    datapath = '/dhc/home/akshay.gudi/coldstore/diabetic_retino_data/data' # add path to kaggle dataset here, folder should contain 'train' and 'test' folders with the respective test and training data
+    datapath = '/sc/home/akshay.gudi/coldstore/retinal_fundus/fundus_photos'
     basepath = Path(datapath)
-    savepath = basepath.parents[0] / 'RGB_preprocessed_images'
+    savepath = basepath.parents[0] / 'preprocessed_fundus'
 
     # Folder of images
-    for traintype in ['train', 'test']:
-        total_path = basepath / traintype
-        total_savepath = savepath / traintype
-        total_savepath.mkdir(parents=True, exist_ok=True)
+    # for traintype in ['train', 'test']:
+    #     total_path = basepath / traintype
+    #     total_savepath = savepath / traintype
+    #     total_savepath.mkdir(parents=True, exist_ok=True)
 
-        # process all images
-        ims = list(total_path.glob('*.jpeg'))
-        for im in tqdm(ims):
-            preprocess_im(im, savepath = total_savepath)
+    #     # process all images
+    #     ims = list(total_path.glob('*.jpeg'))
+    #     for im in tqdm(ims):
+    #         preprocess_im(im, savepath = total_savepath)
+
+    # for traintype in ['train', 'test']:
+    total_path = basepath
+    total_savepath = savepath
+    total_savepath.mkdir(parents=True, exist_ok=True)
+
+    # process all images
+    ims = list(total_path.glob('*.jpeg'))
+    for im in tqdm(ims):
+        preprocess_im(im, savepath = total_savepath)    
