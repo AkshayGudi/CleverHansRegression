@@ -6,11 +6,13 @@ import numpy as np
 
 # data_dir = '/sc/home/akshay.gudi/coldstore/diabetic_retino_data/data/train'
 
-data_dir = '/sc/home/akshay.gudi/coldstore/diabetic_retino_data/preprocessed_Bgraham/train'
+# data_dir = '/sc/home/akshay.gudi/coldstore/diabetic_retino_data/preprocessed_Bgraham/train'
 
 # data_dir = '/sc/home/akshay.gudi/dr/train'
 
 # data_dir = '/sc/home/akshay.gudi/RGB_preprocessed_images/test'
+
+data_dir = '/sc/home/akshay.gudi/coldstore/retinal_fundus/preprocessed_fundus'
 
 for i, filename in enumerate(os.listdir(data_dir)):
     if filename.lower().endswith((".png", ".jpg", ".jpeg")):
