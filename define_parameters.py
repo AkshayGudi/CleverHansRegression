@@ -127,8 +127,8 @@ class Parameters:
     max_label: int = 5 # max predicted label
 
     # Define datapaths
-    datasplittrain_path: Path = Path('config/datasplit/new_data_cv.json')
-    datasplittest_path : Path = Path('config/datasplit/new_data_test.json')
+    datasplittrain_path: Path = Path('config/datasplit/brset_config/brset_train.json')
+    datasplittest_path : Path = Path('config/datasplit/brset_config/brset_test.json')
     
     # Define folders names for saving
     save_prototypes: bool = True

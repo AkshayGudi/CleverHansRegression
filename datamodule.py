@@ -19,7 +19,7 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
         super().__init__()
         self.params = params
 
-        files = list(self.params.train_dir.glob('*.jpeg'))
+        files = list(self.params.train_dir.glob('*.jpg'))
         files = sorted(files)
 
         # Load datadict
@@ -37,8 +37,8 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
         self.train_files = []
         self.train_labels = []
         for name, lab in zip(train_names, train_labels):
-            if (params.train_dir / (name + '.jpeg')).is_file():
-                self.train_files.append(params.train_dir / (name + '.jpeg'))
+            if (params.train_dir / (name + '.jpg')).is_file():
+                self.train_files.append(params.train_dir / (name + '.jpg'))
                 self.train_labels.append(lab)
 
         if len(self.train_files) != len(train_names):
@@ -57,8 +57,8 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
         self.val_files = []
         self.val_labels = []
         for name, lab in zip(val_names, val_labels):
-            if (params.train_dir / (name + '.jpeg')).is_file():
-                self.val_files.append(params.train_dir / (name + '.jpeg'))
+            if (params.train_dir / (name + '.jpg')).is_file():
+                self.val_files.append(params.train_dir / (name + '.jpg'))
                 self.val_labels.append(lab)
 
         if len(self.val_files) != len(val_names):
@@ -74,8 +74,8 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
         self.test_files = []
         self.test_labels = []
         for name, lab in zip(test_names, test_labels):
-            if (params.test_dir / (name + '.jpeg')).is_file():
-                self.test_files.append(params.test_dir / (name + '.jpeg'))
+            if (params.test_dir / (name + '.jpg')).is_file():
+                self.test_files.append(params.test_dir / (name + '.jpg'))
                 self.test_labels.append(lab)
 
         if len(self.test_files) != len(test_names):

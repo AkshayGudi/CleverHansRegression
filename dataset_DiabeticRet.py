@@ -22,7 +22,7 @@ class DiabeticRet(Dataset):
 
         
         if type(datapath) == PosixPath:
-            self.image_paths = list(datapath.glob('**/*.jpeg'))
+            self.image_paths = list(datapath.glob('**/*.jpg'))
         else:
             self.image_paths = datapath
        

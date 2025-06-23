@@ -75,6 +75,6 @@ if __name__ == '__main__':
         total_savepath.mkdir(parents=True, exist_ok=True)
 
         # process all images
-        ims = list(total_path.glob('*.jpeg'))
+        ims = list(total_path.glob('*.jpg'))
         for im in tqdm(ims):
             preprocess_im(im, savepath = total_savepath)
