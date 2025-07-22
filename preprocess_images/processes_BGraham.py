@@ -64,9 +64,9 @@ def preprocess_im(im, savepath):
 if __name__ == '__main__':
 
     # define data and savepaths
-    datapath = '/sc/home/akshay.gudi/coldstore/retinal_fundus/fundus_photos'
+    datapath = '/sc/home/akshay.gudi/data_store/retinal_fundus/fundus_photos'
     basepath = Path(datapath)
-    savepath = basepath.parents[0] / 'preprocessed_fundus'
+    savepath = basepath.parents[0] / 'combined_preprocessed_data'
 
     # Folder of images
     # for traintype in ['train', 'test']:
