@@ -29,7 +29,7 @@ def extract_features_and_prototypes(model_path, dataloader):
         ppnet_model.load_state_dict(checkpoint)
 
     ppnet_model.eval()
-    ppnet_model = ppnet_model.cuda()   # If using GPU
+    ppnet_model = ppnet_model.cuda()  # If using GPU
 
     # 3. Extract features
     feature_maps = []
@@ -121,6 +121,27 @@ def perform_and_plot_tsne(data, labels, title, save_path):
     plt.close()
 
     print(f"TSNE analysis plot for {title} saved to {save_file_path}")
+
+
+    # =========================================================== separate fig for each class =================================================
+    fig = plt.figure(figsize=(20, 15))
+
+    axes = []
+    for class_id in np.unique(labels):
+        mask = labels == class_id
+        ax = fig.add_subplot(2, 3, class_id+1)
+        ax.scatter(tsne_result[mask, 0], tsne_result[mask, 1], c=class_colors[class_id], label=class_names[class_id])
+        axes.append(ax)
+        ax.set_title(f"Class - {class_id}")
+
+    plt.tight_layout()
+    # Save the figure
+    filename = f'tsne_each_class_{title.lower().replace(" ", "_")}.png'
+    save_file_path = save_path / filename
+    plt.savefig(save_file_path)
+    plt.close()
+
+    # =========================================================================================================================================
 
 def perform_and_plot_pca(data, labels, title, save_path, class_colors=None):
     # Perform PCA
@@ -246,7 +267,7 @@ def main(params):
     print("Number of prototypes: ", len(prototype_labels))
     
     # Optional: Save the extracted features
-    save_dir = Path('extracted_features_brset_1')
+    save_dir = Path(training_root_folder + '/tsne_pca')
     save_dir.mkdir(exist_ok=True)
     
     np.save(save_dir / 'feature_maps.npy', feature_maps)

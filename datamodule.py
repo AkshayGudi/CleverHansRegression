@@ -8,6 +8,7 @@ import logging
 from pytorch_lightning.utilities import rank_zero_info
 import numpy as np
 from helpers import load_json
+from pathlib import Path
 
 from dataset_DiabeticRet import DiabeticRet
 
@@ -18,14 +19,15 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
     def __init__(self, params):
         super().__init__()
         self.params = params
-
+        
         files = list(self.params.train_dir.glob('*.jpeg'))
         files = sorted(files)
+        print(f'There are {len(files)} files in training directory')        
 
         # Load datadict
         datadict_train = load_json(params.datasplittrain_path)
 
-        # extract corret train files -------------------------------------------------
+        # extract correct train files -------------------------------------------------
         train_names = datadict_train[f'Fold {params.cv_fold}']['train']['files']
 
         if self.params.labels == 'classes':

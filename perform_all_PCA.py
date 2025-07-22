@@ -173,11 +173,17 @@ def perform_pca_and_tsne(feature_maps, prototypes, image_labels, prototype_label
 
     # Perform PCA on feature maps
     # perform_and_plot_pca(feature_maps_reshaped, image_labels, "Feature Maps", save_path / "pca")
-    perform_and_plot_tsne(feature_maps_reshaped, image_labels, "Feature Maps", save_path / "tsne")
+
+    tsne_save_path = save_path / "tsne"
+
+    save_dir = Path(tsne_save_path)
+    save_dir.mkdir(exist_ok=True)
+
+    perform_and_plot_tsne(feature_maps_reshaped, image_labels, "Feature Maps", tsne_save_path)
 
     # Perform PCA on prototypes
     # perform_and_plot_pca(prototypes_reshaped, prototype_labels, "Prototypes", save_path / "pca")
-    perform_and_plot_tsne(prototypes_reshaped, prototype_labels, "Prototypes", save_path / "tsne")
+    perform_and_plot_tsne(prototypes_reshaped, prototype_labels, "Prototypes", tsne_save_path)
 
 
 def main(params):
@@ -188,7 +194,7 @@ def main(params):
      # Your model path
     # model_path = 'current_savedmodel_data/random_yellow/gpupro/Fold0_subset_yellow_22May_1/saved_models/Epoch_50_after_protopushing.pth'
     # model_path = '/sc/home/akshay.gudi/code/CleverHansRegression/brset_savedmodel_data/exp4/gpupro/Fold0_brset_exp4_23_jun/saved_models/Epoch_50_before_protopushing.pth'
-    training_root_folder = 'DR_savedmodel_data/no-artifcat/exp1/gpupro/Fold0_DR_exp4_24_jun/'
+    training_root_folder = '/sc/home/akshay.gudi/code/CleverHansRegression/DR_savedmodel_data/no-artifcat/exp1/gpupro/Fold0_DR_exp4_24_jun/'
     sub_folder = 'saved_models/Epoch_50_after_protopushing.pth'
     model_path = training_root_folder + sub_folder
      
