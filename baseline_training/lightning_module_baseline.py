@@ -265,7 +265,7 @@ class LitModel_baseline(pl.LightningModule):
         savepath = self.params.save_path_ims / \
             'conf_matrices' / f'map_epoch_{self.current_epoch}'
         plot_confmatrix(conf_matrix, classes=[
-                        '0', '1', '2', '3', '4'], savepath=savepath)
+                        '1', '2', '3', '4', '5'], savepath=savepath)
 
         # Log the resulting image as artifact
         self.logger.experiment.log_artifacts(
@@ -287,7 +287,7 @@ class LitModel_baseline(pl.LightningModule):
         # Plot confusion matrix and asave as image
         savepath = self.params.save_path_ims / 'testing_confmatrix.png'
         plot_confmatrix(conf_matrix, classes=[
-                        '0', '1', '2', '3', '4'], savepath=savepath)
+                        '1', '2', '3', '4', '5'], savepath=savepath)
 
         # Log the resulting image as artifact
         self.logger.experiment.log_artifact(
