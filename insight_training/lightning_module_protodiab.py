@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 from helpers import log_batch_ims
 from helpers import make_prediction_grid
-from helpers import plot_confmatrix
+from helpers import plot_confmatrix, save_confmatrix_csv
 from helpers import plot_prediction
 from helpers import summary_string
 from helpers import MySparsity
@@ -421,6 +421,8 @@ class LitModelProto(pl.LightningModule):
         Args:
             outputs (dict): dict with keys 'pred' and 'target'
         """
+        self.val_accuracy(outputs['pred_classes'], outputs['target'])
+        self.val_kappa(outputs['pred_classes'], outputs['target'])
 
     def test_step_end(self, outputs):
         """ Logging for testing step
@@ -573,9 +575,15 @@ class LitModelProto(pl.LightningModule):
         savepath = self.params.save_path_ims / 'testing_confmatrix.png'
         plot_confmatrix(conf_matrix, classes=['1', '2', '3', '4', '5'], savepath=savepath)
 
+        # Save confusion matrix as CSV
+        csv_savepath = self.params.save_path_ims / 'testing_confmatrix.csv'
+        save_confmatrix_csv(conf_matrix, classes=['1', '2', '3', '4', '5'], savepath=csv_savepath)
+
         # Log the resulting image as artifact
         self.logger.experiment.log_artifact(
             self.logger.run_id, local_path=savepath)
+        self.logger.experiment.log_artifact(
+            self.logger.run_id, local_path=csv_savepath)
 
     def configure_optimizers(self):
         """ Set up all optimizers for training
