@@ -2,6 +2,7 @@
 File defining all helper functions
 """
 import os
+from pathlib import Path
 import torch
 import numpy as np
 import imageio
@@ -92,6 +93,21 @@ def plot_confmatrix(conf_matrix, classes, savepath):
 
     (savepath.parents[0]).mkdir(parents=True, exist_ok=True)
     cfm_plot.figure.savefig(savepath)
+
+
+def save_confmatrix_csv(conf_matrix, classes, savepath):
+    """Save confusion matrix as a CSV file.
+
+    Args:
+        conf_matrix (numpy array): confusion matrix
+        classes (list[str]): class names used as row/column labels
+        savepath (Path): path where the CSV is saved
+    """
+    savepath = Path(savepath)
+    savepath.parents[0].mkdir(parents=True, exist_ok=True)
+    df_cfm = pd.DataFrame(conf_matrix, index=classes, columns=classes)
+    df_cfm.index.name = 'true \\ predicted'
+    df_cfm.to_csv(savepath)
  
 def format_axes(fig, axs):
     """ Function to remover certain axis from plot (need for make predition grid)
@@ -531,7 +547,7 @@ def unravel_index(
     return coord.flip(-1)
 
 
-def plot_prototypes(orig_img_j, upsampled_act_img_j, proto_img_j, proto_bound_j, fc_weights, savepath):
+def plot_prototypes(orig_img_j, upsampled_act_img_j, proto_img_j, proto_bound_j, fc_weights, savepath, red_savepath=None):
     """ Plot the updated protytpes and saved
 
     Args:
@@ -539,9 +555,43 @@ def plot_prototypes(orig_img_j, upsampled_act_img_j, proto_img_j, proto_bound_j,
         upsampled_act_img_j (array): activation on original image
         proto_img_j (array): prototype patch from image
         proto_bound_j ([type]): prototype batch information (bounding box coords)
-        savepath (str): path to save resulting plots to 
+        savepath (str): path to save standard JET layout plot to
+        red_savepath (str, optional): path to save red-overlay layout plot.
+            If None, saves next to savepath using *_redoverlay suffix.
     """
 
+    def _create_red_attention_overlay(original_img, activation_map, max_alpha=0.85):
+        """Create a PRP-style red/yellow overlay from a positive activation map.
+
+        This is used only for visualization during prototype pushing, so that
+        push outputs can be compared side-by-side with PRP figures that use
+        red attention overlays.
+        """
+        # Normalize activation map to [0, 1]
+        act = activation_map - np.amin(activation_map)
+        act_max = np.amax(act)
+        if act_max > 0:
+            act = act / act_max
+        else:
+            act = np.zeros_like(act)
+
+        # Similar to PRP overlay: boost weak activations for visibility
+        intensity = np.sqrt(np.clip(act, 0, 1))
+        alpha = (intensity * max_alpha)[:, :, np.newaxis]
+
+        # Positive-only map: use red/yellow highlights
+        hm_color = np.zeros((act.shape[0], act.shape[1], 3), dtype=np.float32)
+        hm_color[:, :, 0] = 1.0                     # red
+        hm_color[:, :, 1] = intensity * 0.4         # yellow tint for stronger activations
+        hm_color[:, :, 2] = 0.0
+
+        # Slightly dim background where activation is low
+        dim_factor = 1.0 - 0.3 * (1.0 - intensity[:, :, np.newaxis])
+        dimmed_original = original_img * dim_factor
+        overlay = (1 - alpha) * dimmed_original + alpha * hm_color
+        return np.clip(overlay, 0, 1)
+
+    # --- Figure 1: keep existing 1x3 JET heatmap layout (backward compatible) ---
     fig, ax = plt.subplots(1, 3, figsize=(15, 4))
 
     # plot original image
@@ -555,7 +605,6 @@ def plot_prototypes(orig_img_j, upsampled_act_img_j, proto_img_j, proto_bound_j,
     ax[1].imshow(overlayed_original_img_j,  vmin=0, vmax=1)
     ax[1].axis('off')
     ax[1].set_title('Activation Overlay')
-
 
     # show final prototype visualization as blue box
     rect = plot_rectangle(proto_bound_j[1:], edgecolor='b')
@@ -581,7 +630,42 @@ def plot_prototypes(orig_img_j, upsampled_act_img_j, proto_img_j, proto_bound_j,
     ax[0].text(-0.5, .5, txt_string, horizontalalignment='left', verticalalignment='center', transform=ax[0].transAxes)
 
     fig.savefig(savepath)
-    plt.close('all')
+    plt.close(fig)
+
+    # --- Figure 2: additional 1x3 layout with PRP-style red activation overlay ---
+    red_attention_overlay = _create_red_attention_overlay(orig_img_j, upsampled_act_img_j)
+    fig_red, ax_red = plt.subplots(1, 3, figsize=(15, 4))
+
+    ax_red[0].imshow(orig_img_j, vmin=0, vmax=1)
+    ax_red[0].axis('off')
+    ax_red[0].set_title('Original Image')
+
+    ax_red[1].imshow(red_attention_overlay, vmin=0, vmax=1)
+    ax_red[1].axis('off')
+    ax_red[1].set_title('Red Attention Overlay')
+
+    ax_red[2].imshow(proto_img_j, vmin=0, vmax=1)
+    ax_red[2].axis('off')
+    ax_red[2].set_title('Prototype Patch')
+
+    rect = plot_rectangle(proto_bound_j[1:], edgecolor='b')
+    ax_red[0].add_patch(rect)
+    rect = plot_rectangle(proto_bound_j[1:], edgecolor='b')
+    ax_red[1].add_patch(rect)
+
+    legend_elms = [Patch(facecolor='none', edgecolor='b', label='Prototype Patch', linewidth=2)]
+    ax_red[0].legend(legend_elms, [ 'Prototype Patch'],
+                     bbox_to_anchor=(-0.05, 1), loc='upper right')
+    ax_red[0].text(-0.5, .5, txt_string, horizontalalignment='left', verticalalignment='center', transform=ax_red[0].transAxes)
+
+    savepath = Path(savepath)
+    if red_savepath is None:
+        savepath_red = savepath.with_name(f"{savepath.stem}_redoverlay{savepath.suffix}")
+    else:
+        savepath_red = Path(red_savepath)
+        savepath_red.parent.mkdir(parents=True, exist_ok=True)
+    fig_red.savefig(savepath_red)
+    plt.close(fig_red)
 
 
 def plot_embeddings(prototypes, labels, savepath, embed_file_prefix, embed_type='tsne', dim = '2D', sample_points=None, sample_labels=None):

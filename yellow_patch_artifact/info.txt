@@ -1,0 +1,18 @@
+1. First run the prepare_data.py code
+    - This code marks a subset of train and test images to add yellow patch.
+
+2. Next run add_yellow_patch.py code 
+    - This code adds yellow patch to provided images list
+    - This code takes input from the output of prepare_data.py
+    - This code takes input as csv file with images labeled to add and not add yellow patch
+
+3. Next run add_file_extension.py: This produces 2 new files "train_yellow_patch.csv" and "test_yellow_patch.csv".
+It has train and test image file names which has yellow patch along with ".jpeg" extension
+
+4. Run PCA:
+    4.1 For train images: Only Run the slurm file "run_pca_train_advance.slurm" which runs the file perform_pca_tsne_advance_train.py 
+	    - this produces pca and tsne per class separately
+	    - this produces pca and tsne for all classes together
+    4.2 For test images: Only Run the slurm file "run_pca_test_advance.slurm" 
+        
+    4.3 For Prototypes

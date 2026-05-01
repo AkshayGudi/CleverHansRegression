@@ -33,6 +33,16 @@ Usage:
     Note: Use the *_after_protopushing.pth file at the latest epoch from
     the saved_models/ folder. This ensures prototypes are pushed to real
     images and prototype_images are populated for visualization.
+
+Example usage:
+cd /sc/home/akshay.gudi/code/CleverHansRegression && conda activate new_insight_env
+
+python3 main_generate_prp.py \
+  --model_path=/sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v4_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_25_Apr_3/saved_models/Epoch_50_after_protopushing.pth \
+  --param_jsonpath=/sc/home/akshay.gudi/code/CleverHansRegression/config/params_example_ordinal.json \
+  --output_dir=/sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v4_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_25_Apr_3/img/prp_class3_prototypes_epoch50 \
+  --prototypes 2 8 11 16 22 23 24 25 26 27 31 33 37 38 39 
+
 """
 # New version of LRP code
 
@@ -97,6 +107,31 @@ def create_insightr_overlay(orig_img_np, actmap_np):
     return overlay
 
 
+def create_insightr_red_overlay(orig_img_np, actmap_np, max_alpha=0.85):
+    """Create a PRP-style red/yellow overlay from prototype activation map."""
+    h, w = orig_img_np.shape[:2]
+    upsampled_act = cv2.resize(actmap_np, (w, h), interpolation=cv2.INTER_CUBIC)
+    act_min = np.amin(upsampled_act)
+    act_max = np.amax(upsampled_act)
+    if act_max - act_min > 0:
+        upsampled_act = (upsampled_act - act_min) / (act_max - act_min)
+    else:
+        upsampled_act = np.zeros_like(upsampled_act)
+
+    intensity = np.sqrt(np.clip(upsampled_act, 0, 1))
+    alpha = (intensity * max_alpha)[:, :, np.newaxis]
+
+    hm_color = np.zeros((h, w, 3), dtype=np.float32)
+    hm_color[:, :, 0] = 1.0
+    hm_color[:, :, 1] = intensity * 0.4
+    hm_color[:, :, 2] = 0.0
+
+    dim_factor = 1.0 - 0.3 * (1.0 - intensity[:, :, np.newaxis])
+    dimmed_original = orig_img_np * dim_factor
+    overlay = (1 - alpha) * dimmed_original + alpha * hm_color
+    return np.clip(overlay, 0, 1)
+
+
 def create_comparison_image(orig_img_np, insightr_overlay, prp_overlay, save_path, pno):
     """
     Create a side-by-side comparison figure with 3 panels:
@@ -139,6 +174,27 @@ def create_comparison_image(orig_img_np, insightr_overlay, prp_overlay, save_pat
     axes[2].axis('off')
 
     fig.suptitle(f'Prototype {pno} — Attention Comparison', fontsize=16, fontweight='bold', y=0.98)
+    plt.tight_layout(rect=[0, 0, 1, 0.94])
+    plt.savefig(str(save_path), dpi=150, bbox_inches='tight')
+    plt.close(fig)
+
+
+def create_red_comparison_image(orig_img_np, insightr_red_overlay, prp_overlay, save_path, pno):
+    """Create 3-panel comparison using red overlay for activation."""
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+    axes[0].imshow(orig_img_np)
+    axes[0].set_title('Original Image', fontsize=14, fontweight='bold')
+    axes[0].axis('off')
+
+    axes[1].imshow(insightr_red_overlay)
+    axes[1].set_title('INSightR-Net Red Activation Overlay', fontsize=14, fontweight='bold')
+    axes[1].axis('off')
+
+    axes[2].imshow(prp_overlay)
+    axes[2].set_title('PRP Relevance Overlay', fontsize=14, fontweight='bold')
+    axes[2].axis('off')
+
+    fig.suptitle(f'Prototype {pno} — Red Attention Comparison', fontsize=16, fontweight='bold', y=0.98)
     plt.tight_layout(rect=[0, 0, 1, 0.94])
     plt.savefig(str(save_path), dpi=150, bbox_inches='tight')
     plt.close(fig)
@@ -200,7 +256,10 @@ def generate_prp_for_one_stored_prototype(pno, prp_model, device, output_dir):
         return False
 
     img_float = proto_img.float() / 255.0
-    img_tensor = img_float.permute(2, 1, 0).unsqueeze(0)
+    # Dimension fix: prototype_images are stored as (H, W, C). PyTorch
+    # expects (C, H, W); the previous permute(2, 1, 0) gave (C, W, H) and
+    # silently transposed the spatial axes. Use (2, 0, 1) for HWC -> CHW.
+    img_tensor = img_float.permute(2, 0, 1).unsqueeze(0)
 
     print(f"Generating PRP heatmap for prototype {pno}...")
     heatmap = generate_prp_image(img_tensor, pno, prp_model, device)
@@ -216,17 +275,30 @@ def generate_prp_for_one_stored_prototype(pno, prp_model, device, output_dir):
 
     actmap = prp_model.prototype_actmaps[pno].cpu().numpy()
     insightr_overlay = create_insightr_overlay(orig_img_np, actmap)
+    insightr_red_overlay = create_insightr_red_overlay(orig_img_np, actmap)
     create_comparison_image(
         orig_img_np, insightr_overlay, prp_overlay, proto_dir / "comparison.png", pno
     )
+    create_red_comparison_image(
+        orig_img_np, insightr_red_overlay, prp_overlay, proto_dir / "comparison_redoverlay.png", pno
+    )
 
     print(f"Saved to {proto_dir}/:")
-    print("  original.png, heatmap.png, overlay.png, comparison.png")
+    print("  original.png, heatmap.png, overlay.png, comparison.png, comparison_redoverlay.png")
     return True
 
 
 def load_test_image(image_path, img_size=540):
-    """Load and preprocess a test image to [0, 1] normalized tensor."""
+    """Load and preprocess a test image.
+
+    Returns a tuple ``(img_tensor, raw_rgb_np)`` where:
+      - ``img_tensor`` is the preprocessed tensor fed to the model with
+        the standard PyTorch (C, H, W) layout, BGR channels (consistent
+        with how the model was trained via ``cv2.imread`` + permute).
+      - ``raw_rgb_np`` is the un-permuted H x W x 3 RGB image in [0, 1],
+        suitable for overlaying heatmaps on top of the test image as a
+        human would view it.
+    """
     jpeg_im = cv2.imread(str(image_path))
     if jpeg_im is None:
         raise FileNotFoundError(f"Could not read image: {image_path}")
@@ -235,8 +307,12 @@ def load_test_image(image_path, img_size=540):
         jpeg_im = cv2.resize(jpeg_im, (img_size, img_size))
 
     norm = jpeg_im / 255.0
-    img_tensor = torch.from_numpy(norm).permute(2, 1, 0).unsqueeze(0).float()
-    return img_tensor
+    # Dimension fix: cv2.imread returns (H, W, C); PyTorch expects
+    # (C, H, W). The previous permute(2, 1, 0) yielded (C, W, H) and
+    # silently transposed the spatial axes. Use (2, 0, 1) for HWC -> CHW.
+    img_tensor = torch.from_numpy(norm).permute(2, 0, 1).unsqueeze(0).float()
+    raw_rgb_np = cv2.cvtColor(jpeg_im, cv2.COLOR_BGR2RGB) / 255.0
+    return img_tensor, raw_rgb_np.astype(np.float32)
 
 
 def main():
@@ -299,11 +375,18 @@ def main():
     if args.test_image_path is not None:
         # Mode: PRP for a test image
         print(f"Loading test image: {args.test_image_path}")
-        img_tensor = load_test_image(args.test_image_path, img_size=network_params.img_size)
+        img_tensor, raw_rgb_np = load_test_image(
+            args.test_image_path, img_size=network_params.img_size
+        )
 
         print("Generating PRP heatmaps for test image...")
         heatmaps = generate_prp_for_image(
-            img_tensor, prp_model, device, str(output_dir), prototype_indices=proto_indices
+            img_tensor,
+            prp_model,
+            device,
+            str(output_dir),
+            prototype_indices=proto_indices,
+            raw_image_np=raw_rgb_np,
         )
         print(f"Saved {len(heatmaps)} heatmap(s) to {output_dir}")
 
@@ -326,8 +409,11 @@ def main():
         def _comparison_callback(orig_img_np, prp_overlay, pno, proto_dir):
             actmap = prp_model.prototype_actmaps[pno].cpu().numpy()
             insightr_overlay = create_insightr_overlay(orig_img_np, actmap)
+            insightr_red_overlay = create_insightr_red_overlay(orig_img_np, actmap)
             comparison_path = Path(proto_dir) / "comparison.png"
+            comparison_red_path = Path(proto_dir) / "comparison_redoverlay.png"
             create_comparison_image(orig_img_np, insightr_overlay, prp_overlay, comparison_path, pno)
+            create_red_comparison_image(orig_img_np, insightr_red_overlay, prp_overlay, comparison_red_path, pno)
 
         heatmaps = generate_prp_all_prototypes(
             prp_model, device, str(output_dir), comparison_fn=_comparison_callback

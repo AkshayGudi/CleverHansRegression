@@ -34,9 +34,3 @@ For the experiment presented in the paper, we trained our baseline starting from
 ## Logging
 
 The script generate logging files in mlflow. These can be seen by running mlflow ui from the main code folder. 
-
-
-
-
-
-

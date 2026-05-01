@@ -391,7 +391,15 @@ def PRPCanonizedModel(ppnet, lrp_params=None, lrp_layer2method=None):
 # ──────────────────────────────────────────────────────────
 
 def compute_heatmap(relevance, percentile=100):
-    """Convert raw relevance tensor to a normalized 2D heatmap."""
+    """Convert raw relevance tensor to a normalized 2D heatmap.
+
+    Dimension fix: a previous workaround applied ``hm = hm.T`` here to
+    compensate for the loader's broken ``permute(2, 1, 0)``, which fed
+    the model a spatially-transposed tensor. Now that the loaders use
+    the correct ``permute(2, 0, 1)`` (HWC -> CHW) everywhere, the
+    gradient tensor is already in raw-image orientation and no transpose
+    is needed.
+    """
     hm = relevance.squeeze().sum(dim=0).detach().cpu().numpy()
     clim = np.percentile(np.abs(hm), percentile)
     if clim > 0:
@@ -462,7 +470,10 @@ def generate_prp_all_prototypes(model, device, output_dir, comparison_fn=None, p
         os.makedirs(proto_dir, exist_ok=True)
 
         img_float = proto_img.float() / 255.0  # (H, W, 3) in [0, 1]
-        img_tensor = img_float.permute(2, 1, 0).unsqueeze(0)  # (1, 3, H, W)
+        # Dimension fix: prototype_images are stored as (H, W, C); PyTorch
+        # expects (C, H, W). The previous permute(2, 1, 0) yielded (C, W, H)
+        # and silently transposed spatial axes. Use (2, 0, 1) for HWC -> CHW.
+        img_tensor = img_float.permute(2, 0, 1).unsqueeze(0)  # (1, 3, H, W)
 
         heatmap = generate_prp_image(img_tensor, pno, model, device)
         heatmaps[pno] = heatmap
@@ -485,7 +496,14 @@ def generate_prp_all_prototypes(model, device, output_dir, comparison_fn=None, p
     return heatmaps
 
 
-def generate_prp_for_image(image_tensor, model, device, output_dir, prototype_indices=None):
+def generate_prp_for_image(
+    image_tensor,
+    model,
+    device,
+    output_dir,
+    prototype_indices=None,
+    raw_image_np=None,
+):
     """
     Generate PRP heatmaps for a test image across specified (or all) prototypes.
 
@@ -495,6 +513,9 @@ def generate_prp_for_image(image_tensor, model, device, output_dir, prototype_in
         device: torch device.
         output_dir: Directory to save heatmaps.
         prototype_indices: List of prototype indices (None = all).
+        raw_image_np: Optional numpy array (H, W, 3) in [0, 1], RGB. If provided,
+            we additionally save a PRP-on-test-image overlay and a side-by-side
+            comparison (test image | PRP overlay | raw heatmap) per prototype.
 
     Returns:
         heatmaps: dict mapping prototype index to 2D heatmap array.
@@ -512,8 +533,36 @@ def generate_prp_for_image(image_tensor, model, device, output_dir, prototype_in
 
         plt.imsave(
             os.path.join(output_dir, f"prp_testimage_proto_{pno}.png"),
-            heatmap, cmap="seismic", vmin=-1, vmax=1
+            heatmap, cmap="seismic", vmin=-1, vmax=1,
         )
+
+        if raw_image_np is not None:
+            overlay = _create_overlay(raw_image_np, heatmap)
+            plt.imsave(
+                os.path.join(output_dir, f"prp_testimage_proto_{pno}_overlay.png"),
+                overlay, vmin=0, vmax=1,
+            )
+
+            fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+            axes[0].imshow(raw_image_np)
+            axes[0].set_title('Test Image', fontsize=14, fontweight='bold')
+            axes[0].axis('off')
+            axes[1].imshow(overlay)
+            axes[1].set_title('PRP Relevance Overlay', fontsize=14, fontweight='bold')
+            axes[1].axis('off')
+            axes[2].imshow(heatmap, cmap='seismic', vmin=-1, vmax=1)
+            axes[2].set_title('Raw PRP Heatmap', fontsize=14, fontweight='bold')
+            axes[2].axis('off')
+            fig.suptitle(
+                f'Prototype {pno} — Test-image PRP',
+                fontsize=16, fontweight='bold', y=0.98,
+            )
+            plt.tight_layout(rect=[0, 0, 1, 0.94])
+            plt.savefig(
+                os.path.join(output_dir, f"prp_testimage_proto_{pno}_comparison.png"),
+                dpi=150, bbox_inches='tight',
+            )
+            plt.close(fig)
 
     return heatmaps
 

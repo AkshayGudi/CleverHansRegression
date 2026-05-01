@@ -44,6 +44,11 @@ class PushPrototypes:
         self.proto_epoch_dir = self.params.save_path_ims / 'prototypes' / \
             f'epoch_{self.current_epoch}'
         self.proto_epoch_dir.mkdir(parents=True, exist_ok=True)
+        # Save red-overlay prototype visualizations in a separate mirrored folder:
+        # .../img/prototypes/red_activation/epoch_<N>/
+        self.proto_red_epoch_dir = self.params.save_path_ims / 'prototypes' / \
+            'red_activation' / f'epoch_{self.current_epoch}'
+        self.proto_red_epoch_dir.mkdir(parents=True, exist_ok=True)
 
     def push_prototypes(self, dataloader):
         """ Pushes the model prototypes to closest image from dataloader
@@ -123,6 +128,9 @@ class PushPrototypes:
                 savepath = Path(self.proto_epoch_dir) / \
                     f'prototype_{j}_class_{target_class}.png'
                 savepath.parents[0].mkdir(parents=True, exist_ok=True)
+                red_savepath = Path(self.proto_red_epoch_dir) / \
+                    f'prototype_{j}_class_{target_class}.png'
+                red_savepath.parents[0].mkdir(parents=True, exist_ok=True)
 
                 # Upsampled activation map to image size
                 upsampled_actmap = cv2.resize(self.prototype_actmaps[j],
@@ -136,7 +144,8 @@ class PushPrototypes:
                 
                 # Plot prototypes and swap BGR to RGB
                 plot_prototypes(self.prototype_images[j][:, :, ::-1]/255,
-                                upsampled_actmap, proto_crop[:, :, ::-1]/255,  bb_info, fc_weights = fc_weights, savepath=savepath)
+                                upsampled_actmap, proto_crop[:, :, ::-1]/255,  bb_info,
+                                fc_weights=fc_weights, savepath=savepath, red_savepath=red_savepath)
 
         # Save prototype visuzliation after protopushing
         for embed_type in ['pca', 'tsne']:
@@ -200,7 +209,14 @@ class PushPrototypes:
 
                 # Get the whole corresponding input image of prototype
                 orig_img_j = batch_im[index_mindist[0]].cpu().numpy()
-                orig_img_j = np.transpose(orig_img_j, (2, 1, 0)) 
+                # Dimension fix: model tensor is (C, H, W); image-display
+                # libraries (cv2 / matplotlib / np) expect (H, W, C).
+                # Previous transpose((2, 1, 0)) only worked because the
+                # loader was also broken (it produced (C, W, H), and two
+                # spatial transposes cancelled). Now that the loader is
+                # fixed to (C, H, W), use (1, 2, 0) for the proper
+                # CHW -> HWC conversion.
+                orig_img_j = np.transpose(orig_img_j, (1, 2, 0))
 
                 # Find the highly activated path in original image 
                 proto_dist_img_j = batch_protodist[index_mindist[0], proto_j]

@@ -155,7 +155,13 @@ class LitModelProto(pl.LightningModule):
                                                                                             ], proto_ims.shape[2]))  # 5 x 540 x 540
 
                 # Prepare for plotting
-                im_npy = batch_ims[image_n].permute(2, 1, 0).cpu().numpy()[
+                # Dimension fix: model tensor is (C, H, W); matplotlib
+                # expects (H, W, C). Previous permute(2, 1, 0) only worked
+                # because the loader was also broken (it produced (C, W, H)
+                # and two spatial transposes cancelled). Use (1, 2, 0) for
+                # the proper CHW -> HWC conversion. The trailing
+                # [:, :, ::-1] flips channel order BGR -> RGB (unrelated).
+                im_npy = batch_ims[image_n].permute(1, 2, 0).cpu().numpy()[
                     :, :, ::-1]  # BGR to RGB
                 single_activation = activation[image_n, indices].detach(
                 ).cpu().numpy()

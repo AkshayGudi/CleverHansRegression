@@ -400,7 +400,7 @@ def pca_tsne_visualizations(feature_maps: np.ndarray,   # (N,C,H,W)
      # ---- PCA (with standardization) ----
      X_pca, pca, scaler = pca_fit_transform(X, scale=True, n_components=pca_components, random_state=random_state)
 
-     results = compute_group_means_matrix(X_pca=X_pca, labels=y, n_components=3, out_dir=out_dir, tag="test", class_with_artifact=special_label)
+    #  results = compute_group_means_matrix(X_pca=X_pca, labels=y, n_components=3, out_dir=out_dir, tag="test", class_with_artifact=special_label)
 
      # Transform prototypes into the same PCA space (if provided)
      P_pca = None
@@ -512,10 +512,10 @@ def pca_tsne_visualizations(feature_maps: np.ndarray,   # (N,C,H,W)
 def main(params, use_saved=True):
 
      # Path of csv file which has names of all images with yellow patch
-     images_with_artifact_csv_path = "/sc/home/akshay.gudi/data_store/DR/bld_artifact/class3/data_details_class3/test_yellow_patch.csv"
+     images_with_artifact_csv_path = "/sc/home/akshay.gudi/data_store/DR/bld_artifact/class5_v3/data_details_class5/test_yellow_patch.csv"
 
      # path where all training results including trained model is stored
-     training_root_folder = '/sc/home/akshay.gudi/code/CleverHansRegression/bld_art_10_Feb/class3/exp2/DR_25_Jan_2026_1/Fold0_DR_10_Feb_2026_2/'
+     training_root_folder = '/sc/home/akshay.gudi/code/CleverHansRegression/bld_art_23_Feb/class5_v3/exp1/DR_25_Jan_2026_1/Fold0_DR_23_Feb_2026_3/'
      
      #Path to save the TSNE PCA results
      pca_tsne_sub_folder = 'tsne_pca_with_artifact1/test'
@@ -571,7 +571,7 @@ def main(params, use_saved=True):
      print(f"Loaded {len(images_with_artifact)} special images from {images_with_artifact_csv_path}")
 
     # classes from 0 to 4
-     class_with_artifact = 2
+     class_with_artifact = 4
 
      # Mark special ones
      new_labels = _mark_special_images(image_labels, image_names, images_with_artifact, class_with_artifact=class_with_artifact)

@@ -79,6 +79,10 @@ class DiabeticRet(Dataset):
         norm = jpeg_im/255
 
         im = torch.zeros(1, 3, 540,540)
-        im[0] = torch.from_numpy(norm).permute([2,1,0])
+        # Dimension fix: numpy image from cv2.imread is (H, W, C). PyTorch
+        # expects (C, H, W). The previous permute([2, 1, 0]) reordered to
+        # (C, W, H), i.e. it transposed the spatial axes. Use [2, 0, 1] to
+        # produce the correct (C, H, W) layout.
+        im[0] = torch.from_numpy(norm).permute([2,0,1])
         return im
 

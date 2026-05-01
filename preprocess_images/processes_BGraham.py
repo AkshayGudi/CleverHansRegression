@@ -28,13 +28,13 @@ def preprocess_im(im, savepath):
         a = scaleRadius(a, scale)
 
         # Blurring
-        # a = cv2.addWeighted(a, 4, cv2.GaussianBlur(a, (0,0), scale / 30), -4, 128)
+        a = cv2.addWeighted(a, 4, cv2.GaussianBlur(a, (0,0), scale / 30), -4, 128)
         
         # Masking
-        # b = np.zeros(a.shape)
-        # cv2.circle(b, (int(a.shape[1]/2), int(a.shape[0]/2)),
-        # int(scale*0.9), (1,1,1), -1, 8, 0)
-        # a = a*b + 128 * (1-b)
+        b = np.zeros(a.shape)
+        cv2.circle(b, (int(a.shape[1]/2), int(a.shape[0]/2)),
+        int(scale*0.9), (1,1,1), -1, 8, 0)
+        a = a*b + 128 * (1-b)
 
         cv2.imwrite(str(savepath / im.name), a)
 
@@ -64,9 +64,10 @@ def preprocess_im(im, savepath):
 if __name__ == '__main__':
 
     # define data and savepaths
-    datapath = '/dhc/home/akshay.gudi/coldstore/diabetic_retino_data/data' # add path to kaggle dataset here, folder should contain 'train' and 'test' folders with the respective test and training data
+    datapath = '/sc/home/akshay.gudi/data_store/DR/pp_data/data' # add path to kaggle dataset here, folder should contain 'train' and 'test' folders with the respective test and training data
     basepath = Path(datapath)
     savepath = basepath.parents[0] / 'RGB_preprocessed_images'
+    
 
     # Folder of images
     for traintype in ['train', 'test']:

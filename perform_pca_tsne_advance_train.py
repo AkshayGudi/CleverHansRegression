@@ -400,7 +400,7 @@ def pca_tsne_visualizations(feature_maps: np.ndarray,   # (N,C,H,W)
      # ---- PCA (with standardization) ----
      X_pca, pca, scaler = pca_fit_transform(X, scale=True, n_components=pca_components, random_state=random_state)
 
-     results = compute_group_means_matrix(X_pca=X_pca, labels=y, n_components=3, out_dir=out_dir, tag="train", class_with_artifact=special_label)
+    #  results = compute_group_means_matrix(X_pca=X_pca, labels=y, n_components=3, out_dir=out_dir, tag="train", class_with_artifact=special_label)
 
      # Transform prototypes into the same PCA space (if provided)
      P_pca = None
@@ -512,10 +512,10 @@ def pca_tsne_visualizations(feature_maps: np.ndarray,   # (N,C,H,W)
 def main(params, use_saved=True):
 
      # Path of csv file which has names of all images with yellow patch
-     images_with_artifact_csv_path = "/sc/home/akshay.gudi/data_store/DR/bld_artifact/class3/data_details_class3/train_yellow_patch.csv"
+     images_with_artifact_csv_path = "/sc/home/akshay.gudi/data_store/DR/bld_artifact/class5_v4/data_details_class5/train_yellow_patch.csv"
 
      # path where all training results including trained model is stored
-     training_root_folder = '/sc/home/akshay.gudi/code/CleverHansRegression/bld_art_10_Feb/class3/exp2/DR_25_Jan_2026_1/Fold0_DR_10_Feb_2026_2/'
+     training_root_folder = '/sc/home/akshay.gudi/code/CleverHansRegression/bld_art_23_Feb/class5_v3/exp1/DR_25_Jan_2026_1/Fold0_DR_23_Feb_2026_3/'
 
      #Path to save the TSNE PCA results
      pca_tsne_sub_folder = 'tsne_pca_with_artifact1/train'
@@ -542,6 +542,18 @@ def main(params, use_saved=True):
                feature_maps = np.load(feature_file)
                prototypes = np.load(proto_file)
                image_labels = np.load(img_lbl_file)
+
+# --- Diagnostic: check if image_labels.npy has problematic values ---
+               print("[DEBUG load] image_labels.npy stats:")
+               print(f"  shape={image_labels.shape}, dtype={image_labels.dtype}")
+               print(f"  min={np.min(image_labels)}, max={np.max(image_labels)}")
+               print(f"  unique values={np.unique(image_labels)}")
+               if np.max(image_labels) > 5 or np.min(image_labels) < 0:
+                    print("  >>> WARNING: image_labels.npy has values outside [0,5]. Likely cause of class_6/7 in outputs.")
+               if np.min(image_labels) >= 1 and np.max(image_labels) <= 5:
+                    print("  >>> Likely 1-based (1..5). Code expects 0-based (0..4); artifact=5.")
+                # image_labels = np.asarray(image_labels)
+
                prototype_labels = np.load(proto_lbl_file)
                image_names = np.load(img_name_file)
           else:
@@ -558,6 +570,17 @@ def main(params, use_saved=True):
           model_path,
           dataset.train_dataloader()
           )
+        
+          image_labels = np.asarray(image_labels)
+          # --- Diagnostic: check if train dataloader produced values 6 or 7 (after x-1 in extract) ---
+          print("[DEBUG extract] image_labels from train dataloader (after x-1 in _extract):")
+          print(f"  shape={image_labels.shape}, dtype={image_labels.dtype}")
+          print(f"  min={np.min(image_labels)}, max={np.max(image_labels)}")
+          print(f"  unique values={np.unique(image_labels)}")
+          if np.max(image_labels) > 5 or np.min(image_labels) < -1:
+               print("  >>> WARNING: Train dataloader yielded labels that became >5 or <0 after x-1. Likely cause of class_6/7.")
+          if np.max(image_labels) == 5 and np.min(image_labels) >= 0:
+               print("  >>> Values in [0,5]; 5 may be from dataloader (6th class) or will be artifact. Expect at most class_6.")          
 
           np.save(save_dir / 'feature_maps.npy', feature_maps)
           np.save(save_dir / 'prototypes.npy', prototypes)
@@ -570,11 +593,17 @@ def main(params, use_saved=True):
      images_with_artifact = set(pd.read_csv(images_with_artifact_csv_path)["image_name"].astype(str).tolist())
      print(f"Loaded {len(images_with_artifact)} special images from {images_with_artifact_csv_path}")
 
-    # class = 1
-     class_with_artifact = 3
+    # class from 0 to 4
+     class_with_artifact = 4
 
      # Mark special ones
      new_labels = _mark_special_images(image_labels, image_names, images_with_artifact, class_with_artifact=class_with_artifact)
+
+     # --- Diagnostic: labels passed to PCA/t-SNE (will produce class_{k+1} for each unique k) ---
+     print("[DEBUG] new_labels (after _mark_special_images) passed to visualizations:")
+     print(f"  unique = {np.unique(new_labels)}; max = {np.max(new_labels)}")
+     if np.max(new_labels) > 5:
+          print("  >>> These will produce plot filenames class_6, class_7, ... . Fix by normalizing/clipping image_labels to 0..4 before _mark_special_images.")
 
      embeds = pca_tsne_visualizations(feature_maps=feature_maps, 
                                    labels=np.asarray(new_labels, dtype=int), # includes 5 now
