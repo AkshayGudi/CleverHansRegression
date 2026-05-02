@@ -17,15 +17,17 @@ Example (class3_v14 model, remove prototype 3 from class-3 pool):
   cd /sc/home/akshay.gudi/code/CleverHansRegression
   source /sc/home/akshay.gudi/conda3/etc/profile.d/conda.sh
   conda activate new_insight_env
-  PYTHONUNBUFFERED=1 python3 -m ablation.last_layer_retrain \\
-    --ckpt bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/saved_models/Epoch_50_after_protopushing.pth \\
-    --param_jsonpath config/params_example_ordinal.json \\
-    --datapath /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14 \\
-    --train_split config/datasplit/dr_config/dr_train_config.json \\
-    --test_split  config/datasplit/dr_config/dr_test_config.json \\
-    --prototypes_to_remove 3 \\
-    --epochs 5 --lr 1e-3 --batch_size 30 --device cuda \\
-    --output_dir bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/img/lastlayer_retrain_remove3
+
+  PYTHONUNBUFFERED=1 python3 -m ablation.last_layer_retrain \
+    --ckpt bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/saved_models/Epoch_50_after_protopushing.pth \
+    --param_jsonpath config/params_example_ordinal.json \
+    --datapath /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14 \
+    --train_split config/datasplit/dr_config/dr_train_config.json \
+    --test_split  config/datasplit/dr_config/dr_test_config.json \
+    --prototypes_to_remove 24 25 27 28 \
+    --epochs 5 --lr 1e-3 --batch_size 30 --device cuda \
+    --output_dir bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/img/lastlayer_retrain_remove_class3_prt
+
 """
 
 from __future__ import annotations

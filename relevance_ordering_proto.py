@@ -40,6 +40,20 @@ Examples (artifact-stratified):
       --prototypes 40 41 45 \\
       --num_random_images 50 \\
       --seed 42
+
+cd /sc/home/akshay.gudi/code/CleverHansRegression && conda activate new_insight_env
+
+python3 relevance_ordering_proto.py \
+  --artifact_labels_csv /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v8_50/data_details_class3/test_labeled_data.csv \
+  --image_dir /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v8_50/test \
+  --output_dir /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v8_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_25_Apr_2/img/relevance_ordering_class3_split \
+  --model_path /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v8_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_25_Apr_2/saved_models/Epoch_50_after_protopushing.pth \
+  --param_jsonpath /sc/home/akshay.gudi/code/CleverHansRegression/config/params_example_ordinal.json \
+  --prototypes 0 14 16 20 21 22 23 24 26 30 31 32 33 34 35 40 42 43 4 5 7 \
+  --num_random_images 50 \
+  --num_fractions 21 \
+  --seed 42
+
 """
 
 from __future__ import annotations

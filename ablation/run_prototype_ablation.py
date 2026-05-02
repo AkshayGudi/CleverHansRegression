@@ -9,16 +9,17 @@ change in MAE — **without** changing any weights.
 Example (class 3, artifact-only, class-3 prototypes from your experiment):
 
   cd /path/to/CleverHansRegression
-  python3 ablation/run_prototype_ablation.py \\
-    --ckpt bld_art_25_Apr/.../saved_models/Epoch_50_after_protopushing.pth \\
-    --param_jsonpath config/params_example_ordinal.json \\
-    --test_dir /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v4/test \\
-    --test_config config/datasplit/dr_config/dr_test_config.json \\
-    --artifact_csv /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v4/data_details_class3/test_labeled_data.csv \\
-    --target_class 3 \\
-    --artifact_only \\
-    --ablation_indices 0 9 16 17 18 20 22 23 26 27 28 31 32 33 34 35 37 40 44 \\
-    --output_dir ablation_output/class3_v4_epoch50
+  python3 -m ablation.run_prototype_ablation \
+    --ckpt /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/saved_models/Epoch_50_after_protopushing.pth \
+    --param_jsonpath /sc/home/akshay.gudi/code/CleverHansRegression/config/params_example_ordinal.json \
+    --test_dir /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14/test \
+    --test_config /sc/home/akshay.gudi/code/CleverHansRegression/config/datasplit/dr_config/dr_test_config.json \
+    --artifact_csv /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14/data_details_class3/test_labeled_data.csv \
+    --target_class 3 \
+    --ablation_indices 19 21 24 25 26 27 28 29 30 31 32 33 35 37 39 3 \
+    --output_dir /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/img/ablation_epoch50 \
+    --batch_size 16 \
+    --device cuda
 
   # Numerical self-check (no data paths required):
   python3 ablation/run_prototype_ablation.py --self_check
