@@ -142,12 +142,24 @@ if __name__ == '__main__':
     parser.add_argument('--pretrained_path',
                         required=False)
 
-    # set params
-    args_dict = vars(parser.parse_args())
+    parser.add_argument(
+        '--seed',
+        type=int,
+        default=42,
+        help='RNG seed for reproducibility. Omit to use default 42.',
+    )
+
+    # set params (seed is not a Parameters field — Undefined.RAISE would fail)
+    args = parser.parse_args()
+    args_dict = vars(args).copy()
+    seed = int(args_dict.pop('seed'))
     params_dict = load_json(args_dict['param_jsonpath'])
-    params_exp = { **params_dict,**args_dict}
+    params_exp = {**params_dict, **args_dict}
     params = Parameters.from_dict(params_exp)
     params.experiment_run = 'Baselines'
+
+    seed_everything(seed, workers=True)
+    rank_zero_info(f'Global RNG seed: {seed} (seed_everything)')
 
     # run crossval
     run_crossvalidation(params, num_folds = 1)

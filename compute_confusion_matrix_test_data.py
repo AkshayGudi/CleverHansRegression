@@ -72,11 +72,6 @@ def main():
     parser = argparse.ArgumentParser(
         description="Compute confusion matrix and accuracy on TEST set"
     )
-    # parser.add_argument(
-    #     "folder_root",
-    #     type=str,
-    #     help="Root folder of the training run (e.g. .../Fold0_DR_...)",
-    # )
 
     parser.add_argument('--run_name',
                 help = 'Define the run_name for saving everything (example: test_resnet)',
@@ -101,27 +96,16 @@ def main():
     parser.add_argument('--pretrained_path',
                         default = 'config/pretrained_model.ckpt')
 
-    # parser.add_argument(
-    #     "--model_path",
-    #     type=str,
-    #     default=None,
-    #     help="Path to checkpoint. Default: folder_root/saved_models/Epoch_50_after_protopushing.pth",
-    # )
     parser.add_argument(
         "--cv_fold",
         type=int,
         default=0,
         help="Cross-validation fold index",
     )
-    # parser.add_argument(
-    #     "--output_dir",
-    #     type=str,
-    #     default=None,
-    #     help="Directory to save CSV and confusion matrix. Default: folder_root/confusion_test",
-    # )
+
     args = parser.parse_args()
 
-    training_root_folder = '/sc/home/akshay.gudi/code/CleverHansRegression/bld_art_11_Feb/class2/exp1/DR_25_Jan_2026_1/Fold0_DR_11_Feb_2026_1/'
+    training_root_folder = '/sc/home/akshay.gudi/code/CleverHansRegression/each_class_30_Oct/class2/exp1/gpupro/Fold0_DR_ec_30_Oct_2/'
     # sub folder under training_root_folder where trained model is stored
     model_path_sub_folder = 'saved_models/Epoch_50_after_protopushing.pth'
     model_path = training_root_folder + model_path_sub_folder
@@ -129,37 +113,6 @@ def main():
     conf_matrix_dir = "confusion_test"
     output_dir = Path(training_root_folder + conf_matrix_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    # folder_root = Path(args.folder_root)
-    # if not folder_root.is_dir():
-    #     print(f"Error: folder_root is not a directory: {folder_root}")
-    #     sys.exit(1)
-
-    # model_path = args.model_path
-    # if model_path is None:
-    #     model_path = folder_root / "saved_models" / "Epoch_50_after_protopushing.pth"
-    # else:
-    #     model_path = Path(model_path)
-    # if not model_path.is_file():
-    #     print(f"Error: model checkpoint not found: {model_path}")
-    #     sys.exit(1)
-
-    # output_dir = args.output_dir
-    # if output_dir is None:
-    #     output_dir = folder_root / "confusion_test"
-    # else:
-    #     output_dir = Path(output_dir)
-    # output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Load params and build datamodule
-    # params_dict = load_json(args.param_jsonpath)
-    # args_dict = {
-    #     "param_jsonpath": args.param_jsonpath,
-    #     "datapath": args.datapath,
-    #     "savepath": args.savepath,
-    #     "run_name": "eval",
-    # }
-    # params = Parameters.from_dict({**params_dict, **args_dict})
 
     args, unknown = parser.parse_known_args()
     args_dict = vars(args)

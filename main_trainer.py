@@ -139,11 +139,24 @@ if __name__ == "__main__":
     parser.add_argument('--pretrained_path',
                         default = 'config/pretrained_model.ckpt')
 
+    parser.add_argument(
+        '--seed',
+        type=int,
+        default=42,
+        help='RNG seed for reproducibility (PyTorch, NumPy, Python random; dataloader shuffle). '
+             'Omit to use default 42; pass different integers for multi-seed experiments.',
+    )
+
     # Parse command line arguments
-    args_dict = vars(parser.parse_args())
+    args = parser.parse_args()
+    args_dict = vars(args).copy()
+    seed = int(args_dict.pop('seed'))
     params_dict = load_json(args_dict['param_jsonpath'])
-    params_exp = { **params_dict,**args_dict}
+    params_exp = {**params_dict, **args_dict}
     params = Parameters.from_dict(params_exp)
+
+    seed_everything(seed, workers=True)
+    rank_zero_info(f'Global RNG seed: {seed} (seed_everything)')
 
     params.set_savepaths()
     base_runname = params.run_name
