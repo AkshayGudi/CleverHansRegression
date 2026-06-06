@@ -241,13 +241,34 @@ def _write_matrix_csv_with_labels(path: Path, mat: np.ndarray, index_order: List
             w.writerow([str(index_order[i])] + [f"{v:.6f}" for v in row])
 
 
+_DEFAULT_PLOT_FORMATS = ("png", "svg")
+
+
+def _save_fig_multi_format(
+    fig, out_path: Path, formats=_DEFAULT_PLOT_FORMATS, dpi: int = 150
+) -> None:
+    """Save ``fig`` once per format, using ``out_path`` as the stem.
+
+    Each format ``fmt`` is written to ``out_path.with_suffix('.' + fmt)``.
+    The caller's ``out_path`` extension is ignored for format selection but
+    determines the stem.
+    """
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    for fmt in formats:
+        fig.savefig(out_path.with_suffix("." + fmt.lstrip(".")), dpi=dpi)
+
+
 def save_drop_matrix_plot(
     mat: np.ndarray,
     index_order: List[int],
     out_path: Path,
     title: str,
 ) -> None:
-    """Save heatmap of accuracy *drops* (higher = more important coalition)."""
+    """Save heatmap of accuracy *drops* (higher = more important coalition).
+
+    Writes one figure per format in ``_DEFAULT_PLOT_FORMATS`` (PNG + SVG).
+    """
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -261,7 +282,7 @@ def save_drop_matrix_plot(
     ax.set_title(title + "\n(diagonal: one prototype removed; off-diagonal: pair removed)")
     fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Δ rounded accuracy (baseline − ablated)")
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    _save_fig_multi_format(fig, out_path)
     plt.close(fig)
 
 
@@ -271,7 +292,10 @@ def save_mae_matrix_plot(
     out_path: Path,
     title: str,
 ) -> None:
-    """MAE *increase* relative to baseline: mae_ablated − mae_baseline (positive = worse)."""
+    """MAE *increase* relative to baseline: mae_ablated − mae_baseline (positive = worse).
+
+    Writes one figure per format in ``_DEFAULT_PLOT_FORMATS`` (PNG + SVG).
+    """
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -280,10 +304,12 @@ def save_mae_matrix_plot(
     ax.set_yticks(range(len(index_order)))
     ax.set_xticklabels([str(k) for k in index_order], rotation=45, ha="right")
     ax.set_yticklabels([str(k) for k in index_order])
+    ax.set_xlabel("Prototype index")
+    ax.set_ylabel("Prototype index")
     ax.set_title(title + "\n(diagonal: one prototype removed; off-diagonal: pair removed)")
     fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Δ MAE (ablated − baseline)")
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    _save_fig_multi_format(fig, out_path)
     plt.close(fig)
 
 
@@ -552,7 +578,8 @@ def main() -> None:
     )
 
     print(f"Wrote: {csv_path}")
-    print(f"Wrote: {out_dir / 'drop_matrix_rounded_accuracy.png'}")
+    print(f"Wrote: {out_dir / 'drop_matrix_rounded_accuracy.png'} (+ .svg)")
+    print(f"Wrote: {out_dir / 'delta_mae_matrix.png'} (+ .svg)")
     print(f"Baseline rounded_accuracy={baseline_acc:.4f}, MAE={baseline_mae:.4f}, n={len(paths_labels)}")
     best = max(rows, key=lambda r: r["drop_rounded_accuracy"])
     print(
