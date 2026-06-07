@@ -80,7 +80,18 @@ from plrp_ext.insight_prp_plrp import (
     generate_prp_for_image,
     generate_prp_image,
     _create_overlay,
+    save_img_multi,
 )
+from thesis_figure_export import (
+    ThesisFigureExport,
+    THESIS_3PANEL,
+    add_thesis_export_args,
+    export_config_from_args,
+    log_export_settings,
+    save_figure_multi,
+)
+
+_FIG_EXPORT: ThesisFigureExport = THESIS_3PANEL
 
 
 def create_insightr_overlay(orig_img_np, actmap_np):
@@ -129,46 +140,66 @@ def create_insightr_red_overlay(orig_img_np, actmap_np, max_alpha=0.85):
     return np.clip(overlay, 0, 1)
 
 
-def create_comparison_image(orig_img_np, insightr_overlay, prp_overlay, save_path, pno):
-    """Three-panel figure: original | INSightR-Net activation | PLRP-PRP."""
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+def create_comparison_image(orig_img_np, insightr_overlay, prp_overlay, proto_dir, pno,
+                            basename="comparison",
+                            export_cfg: ThesisFigureExport | None = None):
+    """Three-panel figure: original | INSightR-Net activation | PLRP-PRP.
+
+    Saved to ``<proto_dir>/png/<basename>.png`` and ``<proto_dir>/svg/<basename>.svg``.
+    """
+    cfg = export_cfg or _FIG_EXPORT
+    fig, axes = plt.subplots(1, 3, figsize=cfg.figsize)
+    fs = cfg.panel_title_fontsize
 
     axes[0].imshow(orig_img_np)
-    axes[0].set_title('Original Image', fontsize=14, fontweight='bold')
+    axes[0].set_title('Original Image', fontsize=fs, fontweight='bold')
     axes[0].axis('off')
 
     axes[1].imshow(insightr_overlay)
-    axes[1].set_title('INSightR-Net Activation Overlay', fontsize=14, fontweight='bold')
+    axes[1].set_title('INSightR-Net Activation Overlay', fontsize=fs, fontweight='bold')
     axes[1].axis('off')
 
     axes[2].imshow(prp_overlay)
-    axes[2].set_title('PLRP-PRP Relevance Overlay', fontsize=14, fontweight='bold')
+    axes[2].set_title('PLRP-PRP Relevance Overlay', fontsize=fs, fontweight='bold')
     axes[2].axis('off')
 
-    fig.suptitle(f'Prototype {pno} -- Attention Comparison (PLRP-PRP)', fontsize=16, fontweight='bold', y=0.98)
+    fig.suptitle(
+        f'Prototype {pno} -- Attention Comparison (PLRP-PRP)',
+        fontsize=cfg.suptitle_fontsize, fontweight='bold', y=0.98,
+    )
     plt.tight_layout(rect=[0, 0, 1, 0.94])
-    plt.savefig(str(save_path), dpi=150, bbox_inches='tight')
+    save_figure_multi(fig, proto_dir, basename, cfg, formats=("png", "svg"))
     plt.close(fig)
 
 
-def create_red_comparison_image(orig_img_np, insightr_red_overlay, prp_overlay, save_path, pno):
-    """Three-panel figure: original | INSightR-Net red-overlay | PLRP-PRP."""
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+def create_red_comparison_image(orig_img_np, insightr_red_overlay, prp_overlay, proto_dir, pno,
+                                basename="comparison_redoverlay",
+                                export_cfg: ThesisFigureExport | None = None):
+    """Three-panel figure: original | INSightR-Net red-overlay | PLRP-PRP.
+
+    Saved to ``<proto_dir>/png/<basename>.png`` and ``<proto_dir>/svg/<basename>.svg``.
+    """
+    cfg = export_cfg or _FIG_EXPORT
+    fig, axes = plt.subplots(1, 3, figsize=cfg.figsize)
+    fs = cfg.panel_title_fontsize
     axes[0].imshow(orig_img_np)
-    axes[0].set_title('Original Image', fontsize=14, fontweight='bold')
+    axes[0].set_title('Original Image', fontsize=fs, fontweight='bold')
     axes[0].axis('off')
 
     axes[1].imshow(insightr_red_overlay)
-    axes[1].set_title('INSightR-Net Red Activation Overlay', fontsize=14, fontweight='bold')
+    axes[1].set_title('INSightR-Net Red Activation Overlay', fontsize=fs, fontweight='bold')
     axes[1].axis('off')
 
     axes[2].imshow(prp_overlay)
-    axes[2].set_title('PLRP-PRP Relevance Overlay', fontsize=14, fontweight='bold')
+    axes[2].set_title('PLRP-PRP Relevance Overlay', fontsize=fs, fontweight='bold')
     axes[2].axis('off')
 
-    fig.suptitle(f'Prototype {pno} -- Red Attention Comparison (PLRP-PRP)', fontsize=16, fontweight='bold', y=0.98)
+    fig.suptitle(
+        f'Prototype {pno} -- Red Attention Comparison (PLRP-PRP)',
+        fontsize=cfg.suptitle_fontsize, fontweight='bold', y=0.98,
+    )
     plt.tight_layout(rect=[0, 0, 1, 0.94])
-    plt.savefig(str(save_path), dpi=150, bbox_inches='tight')
+    save_figure_multi(fig, proto_dir, basename, cfg, formats=("png", "svg"))
     plt.close(fig)
 
 
@@ -220,23 +251,24 @@ def generate_prp_for_one_stored_prototype(pno, prp_model, device, output_dir):
     proto_dir.mkdir(parents=True, exist_ok=True)
 
     orig_img_np = proto_img.cpu().numpy() / 255.0
-    plt.imsave(str(proto_dir / "heatmap.png"), heatmap, cmap="seismic", vmin=-1, vmax=1)
-    plt.imsave(str(proto_dir / "original.png"), orig_img_np)
+    save_img_multi(proto_dir, "heatmap", heatmap, cmap="seismic", vmin=-1, vmax=1)
+    save_img_multi(proto_dir, "original", orig_img_np)
     prp_overlay = _create_overlay(orig_img_np, heatmap)
-    plt.imsave(str(proto_dir / "overlay.png"), prp_overlay, vmin=0, vmax=1)
+    save_img_multi(proto_dir, "overlay", prp_overlay, vmin=0, vmax=1)
 
     actmap = prp_model.prototype_actmaps[pno].cpu().numpy()
     insightr_overlay = create_insightr_overlay(orig_img_np, actmap)
     insightr_red_overlay = create_insightr_red_overlay(orig_img_np, actmap)
     create_comparison_image(
-        orig_img_np, insightr_overlay, prp_overlay, proto_dir / "comparison.png", pno
+        orig_img_np, insightr_overlay, prp_overlay, proto_dir, pno, basename="comparison"
     )
     create_red_comparison_image(
-        orig_img_np, insightr_red_overlay, prp_overlay, proto_dir / "comparison_redoverlay.png", pno
+        orig_img_np, insightr_red_overlay, prp_overlay, proto_dir, pno,
+        basename="comparison_redoverlay",
     )
 
-    print(f"Saved to {proto_dir}/:")
-    print("  original.png, heatmap.png, overlay.png, comparison.png, comparison_redoverlay.png")
+    print(f"Saved to {proto_dir}/ (png/ and svg/ subfolders):")
+    print("  original, heatmap, overlay, comparison, comparison_redoverlay")
     return True
 
 
@@ -275,8 +307,13 @@ def main():
                         help='Proportion of positive relevance to prune at each parametric layer. Range [0, 1). Default 0.0 (= unpruned PRP).')
     parser.add_argument('--plrp_p_neg', type=float, default=0.0,
                         help='Proportion of negative relevance to prune at each parametric layer. Range [0, 1). Default 0.0.')
+    add_thesis_export_args(parser, panel_count=3)
 
     args = parser.parse_args()
+
+    global _FIG_EXPORT
+    _FIG_EXPORT = export_config_from_args(args, panel_count=3)
+    log_export_settings(_FIG_EXPORT, "main_generate_plrp")
 
     if args.prototype_number is not None and args.prototypes is not None:
         parser.error('Use only one of --prototype_number and --prototypes')
@@ -351,10 +388,13 @@ def main():
             actmap = prp_model.prototype_actmaps[pno].cpu().numpy()
             insightr_overlay = create_insightr_overlay(orig_img_np, actmap)
             insightr_red_overlay = create_insightr_red_overlay(orig_img_np, actmap)
-            comparison_path = Path(proto_dir) / "comparison.png"
-            comparison_red_path = Path(proto_dir) / "comparison_redoverlay.png"
-            create_comparison_image(orig_img_np, insightr_overlay, prp_overlay, comparison_path, pno)
-            create_red_comparison_image(orig_img_np, insightr_red_overlay, prp_overlay, comparison_red_path, pno)
+            create_comparison_image(
+                orig_img_np, insightr_overlay, prp_overlay, proto_dir, pno, basename="comparison"
+            )
+            create_red_comparison_image(
+                orig_img_np, insightr_red_overlay, prp_overlay, proto_dir, pno,
+                basename="comparison_redoverlay",
+            )
 
         heatmaps = generate_prp_all_prototypes(
             prp_model, device, str(output_dir), comparison_fn=_comparison_callback

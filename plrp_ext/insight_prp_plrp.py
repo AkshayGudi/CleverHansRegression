@@ -420,6 +420,45 @@ def generate_prp_image(inputs, pno, model, device):
     return heatmap
 
 
+_PLRP_IMG_FORMATS = ("png", "svg")
+
+
+def save_img_multi(proto_dir, basename, arr, formats=_PLRP_IMG_FORMATS, **imsave_kwargs):
+    """Save image array ``arr`` as ``<proto_dir>/<fmt>/<basename>.<fmt>`` per format.
+
+    Each format gets its own subfolder (e.g. ``prototype_5/png/heatmap.png`` and
+    ``prototype_5/svg/heatmap.svg``). ``imsave_kwargs`` are forwarded to
+    ``matplotlib.pyplot.imsave``.
+    """
+    for fmt in formats:
+        sub = os.path.join(str(proto_dir), fmt)
+        os.makedirs(sub, exist_ok=True)
+        plt.imsave(os.path.join(sub, f"{basename}.{fmt}"), arr, **imsave_kwargs)
+
+
+def save_fig_multi(fig, proto_dir, basename, formats=_PLRP_IMG_FORMATS, dpi=150, export_cfg=None):
+    """Save ``fig`` as ``<proto_dir>/<fmt>/<basename>.<fmt>`` for each format.
+
+    When *export_cfg* is omitted, uses thesis-friendly defaults from
+    ``thesis_figure_export.THESIS_3PANEL`` (small PNGs for LaTeX).
+    Legacy *dpi* is ignored if *export_cfg* is provided; if both are default,
+    thesis export still applies.
+    """
+    try:
+        from thesis_figure_export import THESIS_3PANEL, save_figure_multi
+        cfg = export_cfg if export_cfg is not None else THESIS_3PANEL
+        if export_cfg is None and dpi != 150:
+            cfg = cfg.__class__(figsize=cfg.figsize, dpi=dpi, max_width_px=cfg.max_width_px)
+        save_figure_multi(fig, proto_dir, basename, cfg, formats=formats)
+        return
+    except ImportError:
+        pass
+    for fmt in formats:
+        sub = os.path.join(str(proto_dir), fmt)
+        os.makedirs(sub, exist_ok=True)
+        fig.savefig(os.path.join(sub, f"{basename}.{fmt}"), dpi=dpi, bbox_inches="tight")
+
+
 def generate_prp_all_prototypes(model, device, output_dir, comparison_fn=None, percentile=100):
     """Generate PLRP-PRP heatmaps for all prototypes using their stored source images."""
     os.makedirs(output_dir, exist_ok=True)
@@ -444,18 +483,18 @@ def generate_prp_all_prototypes(model, device, output_dir, comparison_fn=None, p
         heatmap = generate_prp_image(img_tensor, pno, model, device)
         heatmaps[pno] = heatmap
 
-        plt.imsave(os.path.join(proto_dir, "heatmap.png"), heatmap, cmap="seismic", vmin=-1, vmax=1)
+        save_img_multi(proto_dir, "heatmap", heatmap, cmap="seismic", vmin=-1, vmax=1)
 
         orig_img_np = proto_img.cpu().numpy() / 255.0
-        plt.imsave(os.path.join(proto_dir, "original.png"), orig_img_np)
+        save_img_multi(proto_dir, "original", orig_img_np)
 
         prp_overlay = _create_overlay(orig_img_np, heatmap)
-        plt.imsave(os.path.join(proto_dir, "overlay.png"), prp_overlay, vmin=0, vmax=1)
+        save_img_multi(proto_dir, "overlay", prp_overlay, vmin=0, vmax=1)
 
         if comparison_fn is not None:
             comparison_fn(orig_img_np, prp_overlay, pno, proto_dir)
 
-        print(f"Prototype {pno}/{num_prototypes - 1}: saved to {proto_dir}/")
+        print(f"Prototype {pno}/{num_prototypes - 1}: saved to {proto_dir}/ (png/ and svg/)")
 
     return heatmaps
 
@@ -480,17 +519,19 @@ def generate_prp_for_image(
         heatmap = generate_prp_image(image_tensor, pno, model, device)
         heatmaps[pno] = heatmap
 
-        plt.imsave(
-            os.path.join(output_dir, f"prp_testimage_proto_{pno}.png"),
-            heatmap, cmap="seismic", vmin=-1, vmax=1,
-        )
+        for _fmt in _PLRP_IMG_FORMATS:
+            plt.imsave(
+                os.path.join(output_dir, f"prp_testimage_proto_{pno}.{_fmt}"),
+                heatmap, cmap="seismic", vmin=-1, vmax=1,
+            )
 
         if raw_image_np is not None:
             overlay = _create_overlay(raw_image_np, heatmap)
-            plt.imsave(
-                os.path.join(output_dir, f"prp_testimage_proto_{pno}_overlay.png"),
-                overlay, vmin=0, vmax=1,
-            )
+            for _fmt in _PLRP_IMG_FORMATS:
+                plt.imsave(
+                    os.path.join(output_dir, f"prp_testimage_proto_{pno}_overlay.{_fmt}"),
+                    overlay, vmin=0, vmax=1,
+                )
 
             fig, axes = plt.subplots(1, 3, figsize=(18, 6))
             axes[0].imshow(raw_image_np)
@@ -507,10 +548,11 @@ def generate_prp_for_image(
                 fontsize=16, fontweight='bold', y=0.98,
             )
             plt.tight_layout(rect=[0, 0, 1, 0.94])
-            plt.savefig(
-                os.path.join(output_dir, f"prp_testimage_proto_{pno}_comparison.png"),
-                dpi=150, bbox_inches='tight',
-            )
+            for _fmt in _PLRP_IMG_FORMATS:
+                plt.savefig(
+                    os.path.join(output_dir, f"prp_testimage_proto_{pno}_comparison.{_fmt}"),
+                    dpi=150, bbox_inches='tight',
+                )
             plt.close(fig)
 
     return heatmaps

@@ -446,9 +446,16 @@ def plot_mean_curves(
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig(savepath, dpi=150)
+    # Save PNG (as requested by savepath) plus an SVG sibling in the same folder.
+    sp = Path(savepath)
+    fig.savefig(str(sp), dpi=150)
+    saved = [str(sp)]
+    if sp.suffix.lower() != ".svg":
+        svg_path = sp.with_suffix(".svg")
+        fig.savefig(str(svg_path))
+        saved.append(str(svg_path))
     plt.close(fig)
-    print(f"Saved plot: {savepath}")
+    print(f"Saved plot: {', '.join(saved)}")
 
 
 def run_relevance_ordering_core(

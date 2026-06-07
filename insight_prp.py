@@ -437,6 +437,22 @@ def generate_prp_image(inputs, pno, model, device):
     return heatmap
 
 
+_PRP_IMG_FORMATS = ("png", "svg")
+
+
+def save_img_multi(proto_dir, basename, arr, formats=_PRP_IMG_FORMATS, **imsave_kwargs):
+    """Save image array ``arr`` as ``<proto_dir>/<fmt>/<basename>.<fmt>`` per format.
+
+    Each format gets its own subfolder (e.g. ``prototype_5/png/heatmap.png`` and
+    ``prototype_5/svg/heatmap.svg``). ``imsave_kwargs`` (cmap, vmin, vmax, ...) are
+    passed straight through to ``matplotlib.pyplot.imsave``.
+    """
+    for fmt in formats:
+        sub = os.path.join(str(proto_dir), fmt)
+        os.makedirs(sub, exist_ok=True)
+        plt.imsave(os.path.join(sub, f"{basename}.{fmt}"), arr, **imsave_kwargs)
+
+
 def generate_prp_all_prototypes(model, device, output_dir, comparison_fn=None, percentile=100):
     """
     Generate PRP heatmaps for all prototypes using their stored source images.
@@ -478,13 +494,13 @@ def generate_prp_all_prototypes(model, device, output_dir, comparison_fn=None, p
         heatmap = generate_prp_image(img_tensor, pno, model, device)
         heatmaps[pno] = heatmap
 
-        plt.imsave(os.path.join(proto_dir, "heatmap.png"), heatmap, cmap="seismic", vmin=-1, vmax=1)
+        save_img_multi(proto_dir, "heatmap", heatmap, cmap="seismic", vmin=-1, vmax=1)
 
         orig_img_np = proto_img.cpu().numpy() / 255.0
-        plt.imsave(os.path.join(proto_dir, "original.png"), orig_img_np)
+        save_img_multi(proto_dir, "original", orig_img_np)
 
         prp_overlay = _create_overlay(orig_img_np, heatmap)
-        plt.imsave(os.path.join(proto_dir, "overlay.png"), prp_overlay, vmin=0, vmax=1)
+        save_img_multi(proto_dir, "overlay", prp_overlay, vmin=0, vmax=1)
 
         # If a comparison function is provided, call it to generate the
         # side-by-side comparison image (Original | INSightR-Net | PRP).
@@ -531,17 +547,19 @@ def generate_prp_for_image(
         heatmap = generate_prp_image(image_tensor, pno, model, device)
         heatmaps[pno] = heatmap
 
-        plt.imsave(
-            os.path.join(output_dir, f"prp_testimage_proto_{pno}.png"),
-            heatmap, cmap="seismic", vmin=-1, vmax=1,
-        )
+        for _fmt in _PRP_IMG_FORMATS:
+            plt.imsave(
+                os.path.join(output_dir, f"prp_testimage_proto_{pno}.{_fmt}"),
+                heatmap, cmap="seismic", vmin=-1, vmax=1,
+            )
 
         if raw_image_np is not None:
             overlay = _create_overlay(raw_image_np, heatmap)
-            plt.imsave(
-                os.path.join(output_dir, f"prp_testimage_proto_{pno}_overlay.png"),
-                overlay, vmin=0, vmax=1,
-            )
+            for _fmt in _PRP_IMG_FORMATS:
+                plt.imsave(
+                    os.path.join(output_dir, f"prp_testimage_proto_{pno}_overlay.{_fmt}"),
+                    overlay, vmin=0, vmax=1,
+                )
 
             fig, axes = plt.subplots(1, 3, figsize=(18, 6))
             axes[0].imshow(raw_image_np)
@@ -558,10 +576,11 @@ def generate_prp_for_image(
                 fontsize=16, fontweight='bold', y=0.98,
             )
             plt.tight_layout(rect=[0, 0, 1, 0.94])
-            plt.savefig(
-                os.path.join(output_dir, f"prp_testimage_proto_{pno}_comparison.png"),
-                dpi=150, bbox_inches='tight',
-            )
+            for _fmt in _PRP_IMG_FORMATS:
+                plt.savefig(
+                    os.path.join(output_dir, f"prp_testimage_proto_{pno}_comparison.{_fmt}"),
+                    dpi=150, bbox_inches='tight',
+                )
             plt.close(fig)
 
     return heatmaps

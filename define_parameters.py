@@ -79,8 +79,8 @@ class NetworkParams:
     pretrained: bool = True 
 
     proto_activation: str = 'exp_norm'           
-    proto_minrange: float = 0.1 # minimum prototype label
-    proto_maxrange: float = 5.9 # maximum prototype label
+    proto_minrange: float = 0.5 # 0.1  minimum prototype label
+    proto_maxrange: float = 5.5 # 5.9 maximum prototype label
     init_ll = 'class_idx' # last layer initialization with class_idx or with ones
     assert init_ll in ['class_idx', 'ones']
 

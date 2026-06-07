@@ -14,7 +14,7 @@ def extract_image_names(input_csv, output_csv):
     df_image.to_csv(output_csv, index=False)
 
 # Example usage
-root_folder = "/sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14/data_details_class3/"
+root_folder = "/sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v8_50_3/data_details_class3/"
 input_csv = root_folder + "DR_train_data_patch.csv"
 output_csv = root_folder + "train_yellow_patch.csv"
 extract_image_names(input_csv, output_csv)

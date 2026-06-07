@@ -91,7 +91,22 @@ from plrp_ext.lrp_general6_plrp import set_plrp_params, get_plrp_params
 from plrp_ext.insight_prp_plrp import (
     PRPCanonizedModel as build_plrp_canon,
     generate_prp_image as generate_prp_plrp,
+    save_img_multi,
 )
+
+_IMG_FORMATS = ("png", "svg")
+
+from thesis_figure_export import (
+    ThesisFigureExport,
+    THESIS_4PANEL,
+    add_thesis_export_args,
+    export_config_from_args,
+    log_export_settings,
+    save_figure,
+    save_figure_multi,
+)
+
+_FIG_EXPORT: ThesisFigureExport = THESIS_4PANEL
 
 
 # ---------------------------------------------------------------------------
@@ -192,36 +207,51 @@ def create_insightr_activation_overlay(orig_img_np, actmap_np, max_alpha=0.85):
     return np.clip(overlay, 0, 1)
 
 
-def save_four_panel(orig_img, insightr_overlay, baseline_overlay, plrp_overlay,
-                    save_path, pno, p_pos, p_neg):
-    """Save a four-panel side-by-side comparison figure."""
-    fig, axes = plt.subplots(1, 4, figsize=(24, 6))
+def _build_four_panel_fig(orig_img, insightr_overlay, baseline_overlay, plrp_overlay,
+                          pno, p_pos, p_neg,
+                          export_cfg: ThesisFigureExport | None = None):
+    """Build (but do not save) the four-panel comparison figure."""
+    cfg = export_cfg or _FIG_EXPORT
+    fig, axes = plt.subplots(1, 4, figsize=cfg.figsize)
+    fs = cfg.panel_title_fontsize
 
     axes[0].imshow(orig_img)
-    axes[0].set_title("Original Image", fontsize=14, fontweight="bold")
+    axes[0].set_title("Original Image", fontsize=fs, fontweight="bold")
     axes[0].axis("off")
 
     axes[1].imshow(insightr_overlay)
-    axes[1].set_title("INSightR-Net Activation", fontsize=14, fontweight="bold")
+    axes[1].set_title("INSightR-Net Activation", fontsize=fs, fontweight="bold")
     axes[1].axis("off")
 
     axes[2].imshow(baseline_overlay)
-    axes[2].set_title("Baseline PRP", fontsize=14, fontweight="bold")
+    axes[2].set_title("Baseline PRP", fontsize=fs, fontweight="bold")
     axes[2].axis("off")
 
     axes[3].imshow(plrp_overlay)
     axes[3].set_title(
         f"PLRP-PRP  (p_pos={p_pos}, p_neg={p_neg})",
-        fontsize=14, fontweight="bold",
+        fontsize=fs, fontweight="bold",
     )
     axes[3].axis("off")
 
     fig.suptitle(
         f"Prototype {pno}  -  INSightR-Net  ->  Baseline PRP  ->  PLRP-PRP",
-        fontsize=16, fontweight="bold", y=0.98,
+        fontsize=cfg.suptitle_fontsize, fontweight="bold", y=0.98,
     )
     plt.tight_layout(rect=[0, 0, 1, 0.94])
-    plt.savefig(str(save_path), dpi=150, bbox_inches="tight")
+    return fig
+
+
+def save_four_panel(orig_img, insightr_overlay, baseline_overlay, plrp_overlay,
+                    save_path, pno, p_pos, p_neg,
+                    export_cfg: ThesisFigureExport | None = None):
+    """Save a four-panel comparison as PNG + SVG siblings of ``save_path`` (flat)."""
+    cfg = export_cfg or _FIG_EXPORT
+    fig = _build_four_panel_fig(orig_img, insightr_overlay, baseline_overlay,
+                                plrp_overlay, pno, p_pos, p_neg, export_cfg=cfg)
+    sp = Path(save_path)
+    for fmt in _IMG_FORMATS:
+        save_figure(fig, sp.with_suffix("." + fmt), cfg)
     plt.close(fig)
 
 
@@ -273,21 +303,20 @@ def run_stored_prototype(pno, ppnet_baseline_canon, ppnet_plrp_canon,
     proto_dir = output_dir / f"prototype_{pno}"
     proto_dir.mkdir(parents=True, exist_ok=True)
 
-    plt.imsave(str(proto_dir / "original.png"), orig_img_np)
-    plt.imsave(str(proto_dir / "insightr_activation_overlay.png"),
-               insightr_overlay, vmin=0, vmax=1)
-    plt.imsave(str(proto_dir / "baseline_prp_overlay.png"),
-               baseline_overlay, vmin=0, vmax=1)
-    plt.imsave(str(proto_dir / "plrp_prp_overlay.png"),
-               plrp_overlay, vmin=0, vmax=1)
-    plt.imsave(str(proto_dir / "baseline_prp_heatmap.png"),
-               baseline_heatmap, cmap="seismic", vmin=-1, vmax=1)
-    plt.imsave(str(proto_dir / "plrp_prp_heatmap.png"),
-               plrp_heatmap, cmap="seismic", vmin=-1, vmax=1)
+    save_img_multi(proto_dir, "original", orig_img_np)
+    save_img_multi(proto_dir, "insightr_activation_overlay", insightr_overlay, vmin=0, vmax=1)
+    save_img_multi(proto_dir, "baseline_prp_overlay", baseline_overlay, vmin=0, vmax=1)
+    save_img_multi(proto_dir, "plrp_prp_overlay", plrp_overlay, vmin=0, vmax=1)
+    save_img_multi(proto_dir, "baseline_prp_heatmap", baseline_heatmap,
+                   cmap="seismic", vmin=-1, vmax=1)
+    save_img_multi(proto_dir, "plrp_prp_heatmap", plrp_heatmap,
+                   cmap="seismic", vmin=-1, vmax=1)
 
-    save_four_panel(orig_img_np, insightr_overlay, baseline_overlay, plrp_overlay,
-                    proto_dir / "comparison_4panel.png", pno, p_pos, p_neg)
-    print(f"Prototype {pno}: saved 4-panel to {proto_dir}/comparison_4panel.png")
+    fig = _build_four_panel_fig(orig_img_np, insightr_overlay, baseline_overlay,
+                                plrp_overlay, pno, p_pos, p_neg)
+    save_figure_multi(fig, proto_dir, "comparison_4panel", _FIG_EXPORT, formats=_IMG_FORMATS)
+    plt.close(fig)
+    print(f"Prototype {pno}: saved to {proto_dir}/ (png/ and svg/ subfolders)")
     return True
 
 
@@ -306,18 +335,19 @@ def run_test_image(img_tensor, raw_rgb_np, prototype_indices,
         plrp_overlay = create_prp_red_overlay(raw_rgb_np, plrp_heatmap)
         insightr_overlay = create_insightr_activation_overlay(raw_rgb_np, actmap)
 
-        plt.imsave(str(output_dir / f"proto_{pno}_original.png"), raw_rgb_np)
-        plt.imsave(str(output_dir / f"proto_{pno}_insightr_activation_overlay.png"),
-                   insightr_overlay, vmin=0, vmax=1)
-        plt.imsave(str(output_dir / f"proto_{pno}_baseline_prp_overlay.png"),
-                   baseline_overlay, vmin=0, vmax=1)
-        plt.imsave(str(output_dir / f"proto_{pno}_plrp_prp_overlay.png"),
-                   plrp_overlay, vmin=0, vmax=1)
+        for _fmt in _IMG_FORMATS:
+            plt.imsave(str(output_dir / f"proto_{pno}_original.{_fmt}"), raw_rgb_np)
+            plt.imsave(str(output_dir / f"proto_{pno}_insightr_activation_overlay.{_fmt}"),
+                       insightr_overlay, vmin=0, vmax=1)
+            plt.imsave(str(output_dir / f"proto_{pno}_baseline_prp_overlay.{_fmt}"),
+                       baseline_overlay, vmin=0, vmax=1)
+            plt.imsave(str(output_dir / f"proto_{pno}_plrp_prp_overlay.{_fmt}"),
+                       plrp_overlay, vmin=0, vmax=1)
         save_four_panel(raw_rgb_np, insightr_overlay, baseline_overlay, plrp_overlay,
                         output_dir / f"proto_{pno}_comparison_4panel.png",
                         pno, p_pos, p_neg)
-        print(f"Prototype {pno}: saved 4-panel to "
-              f"{output_dir}/proto_{pno}_comparison_4panel.png")
+        print(f"Prototype {pno}: saved 4-panel (png+svg) to "
+              f"{output_dir}/proto_{pno}_comparison_4panel.*")
 
 
 # ---------------------------------------------------------------------------
@@ -345,8 +375,13 @@ def main():
                         help="PLRP-lambda: proportion of positive relevance to prune. Default 0.25.")
     parser.add_argument("--plrp_p_neg", type=float, default=0.125,
                         help="PLRP-lambda: proportion of negative relevance to prune. Default 0.125.")
+    add_thesis_export_args(parser, panel_count=4)
 
     args = parser.parse_args()
+
+    global _FIG_EXPORT
+    _FIG_EXPORT = export_config_from_args(args, panel_count=4)
+    log_export_settings(_FIG_EXPORT, "compare_insightr_prp_plrp")
 
     if args.prototype_number is not None and args.prototypes is not None:
         parser.error("Use only one of --prototype_number and --prototypes.")
