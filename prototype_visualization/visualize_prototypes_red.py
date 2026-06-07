@@ -26,13 +26,13 @@ Usage example::
     cd /path/to/CleverHansRegression
     conda activate new_insight_env
 
-    PYTHONUNBUFFERED=1 python3 visualize_prototypes_red.py \
+    PYTHONUNBUFFERED=1 python3 prototype_visualization/visualize_prototypes_red.py \
         --ckpt .../saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath config/params_example_ordinal.json \
         --output_dir .../img/prototypes/red_activation_clean/epoch_50
 
     # Only specific prototypes:
-    PYTHONUNBUFFERED=1 python3 visualize_prototypes_red.py \
+    PYTHONUNBUFFERED=1 python3 prototype_visualization/visualize_prototypes_red.py \
         --ckpt .../Epoch_50_after_protopushing.pth \
         --param_jsonpath config/params_example_ordinal.json \
         --output_dir .../red_activation_clean/epoch_50 \
@@ -56,9 +56,12 @@ import numpy as np
 import torch
 from matplotlib import patches
 
-_ROOT = Path(__file__).resolve().parent
-if str(_ROOT) not in sys.path:
-    sys.path.insert(0, str(_ROOT))
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_ROOT = _SCRIPT_DIR.parent
+
+for _p in (_ROOT, _SCRIPT_DIR):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 from define_parameters import NetworkParams  # noqa: E402
 from helpers import load_json, find_high_activation_crop  # noqa: E402

@@ -2,7 +2,7 @@
 Compute confusion matrix CSV from a saved INSightR-Net model on the test set.
 
 Usage:
-    python compute_confmatrix_from_model.py \
+    python -m metrics.compute_confmatrix_from_model \
         --model_path <path to .pth saved model> \
         --param_jsonpath config/params_example_ordinal.json \
         --datapath <root folder containing train/ and test/ subdirs> \
@@ -14,19 +14,25 @@ Plots (saved in --output_dir, same folder as predictions_test.csv by default):
         predictions_raw_true_class{k}_by_artifact.png
 
 Example with artifact overlay diagnostics:
-    python compute_confmatrix_from_model.py \\
+    python -m metrics.compute_confmatrix_from_model \\
         --model_path ... --datapath ... --output_dir ... \\
         --artifact_class 3 \\
         --artifact_labels_csv /path/to/test_labeled_data.csv
 
 Plots only from an existing CSV (no GPU):
-    python compute_confmatrix_from_model.py \\
+    python -m metrics.compute_confmatrix_from_model \\
         --from_predictions_csv path/to/predictions_test.csv \\
         --artifact_class 3 \\
         --artifact_labels_csv path/to/test_labeled_data.csv
 """
-import argparse
+import sys
 from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+import argparse
 
 import numpy as np
 import pandas as pd

@@ -21,7 +21,7 @@ Computed metrics
 
 Outputs (in ``--output_dir``)
   - ``regression_test_summary.json`` — full test metrics (top level) + ``metrics_true_class_K_only``
-  - ``predictions_test.csv`` — optional mirror of per-image preds (same columns as ``compute_confmatrix_from_model``)
+  - ``predictions_test.csv`` — optional mirror of per-image preds (same columns as ``metrics.compute_confmatrix_from_model``)
 
 In order to run from CleverHansRegression root::
 
@@ -60,7 +60,7 @@ from sklearn.metrics import (  # noqa: E402
     r2_score,
 )
 
-from compute_confmatrix_from_model import load_ppnet, run_inference  # noqa: E402
+from metrics.compute_confmatrix_from_model import load_ppnet, run_inference  # noqa: E402
 from datamodule import MyDataModuleDiabRet  # noqa: E402
 from define_parameters import Parameters  # noqa: E402
 from helpers import load_json, plot_confmatrix, save_confmatrix_csv  # noqa: E402
