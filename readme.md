@@ -22,21 +22,64 @@ conda activate new_insight_env
 
 ## Trained models
 
-Download the four released checkpoints and extract them under `trained_models/`:
+Four INSightR-Net checkpoints (epoch 50, after protopushing) are available from [GitHub Releases](https://github.com/AkshayGudi/CleverHansRegression/releases/tag/v1.0-trained-models):
+
+**[trained_models_DR_checkpoints.zip](https://github.com/AkshayGudi/CleverHansRegression/releases/download/v1.0-trained-models/trained_models_DR_checkpoints.zip)**
+
+### Download and extract
+
+From the **repository root** (`CleverHansRegression/`):
+
+```bash
+cd /path/to/CleverHansRegression
+
+wget -O trained_models_DR_checkpoints.zip \
+  "https://github.com/AkshayGudi/CleverHansRegression/releases/download/v1.0-trained-models/trained_models_DR_checkpoints.zip"
+
+unzip trained_models_DR_checkpoints.zip
+rm trained_models_DR_checkpoints.zip   # optional
+```
+
+The zip already contains a top-level `trained_models/` folder, so extracting in the repo root gives:
 
 ```
-trained_models/
-  DR-100-fixed/
-    Epoch_50_after_protopushing.pth
-  DR-100-random/
-    Epoch_50_after_protopushing.pth
-  DR-50-fixed/
-    Epoch_50_after_protopushing.pth
-  DR-50-random/
-    Epoch_50_after_protopushing.pth
+CleverHansRegression/
+  trained_models/
+    DR-100-fixed/
+      Epoch_50_after_protopushing.pth
+    DR-100-random/
+      Epoch_50_after_protopushing.pth
+    DR-50-fixed/
+      Epoch_50_after_protopushing.pth
+    DR-50-random/
+      Epoch_50_after_protopushing.pth
 ```
 
-Pretrained weights for training (optional): `config/pretrained_model.ckpt` (see GitHub Releases).
+| Checkpoint folder | Experiment | Use with `--model_path` / `--ckpt` |
+|-------------------|------------|-------------------------------------|
+| `trained_models/DR-100-fixed/` | 100% contamination, fixed placement | Matches `data/DR-100-fixed` after data prep |
+| `trained_models/DR-100-random/` | 100% contamination, random placement | Matches `data/DR-100-random` |
+| `trained_models/DR-50-fixed/` | 50% contamination, fixed placement | Matches `data/DR-50-fixed` |
+| `trained_models/DR-50-random/` | 50% contamination, random placement | Matches `data/DR-50-random` |
+
+Pick the checkpoint that matches your prepared data experiment. Example:
+
+```bash
+export EXP=DR-100-fixed
+export MODEL=trained_models/$EXP/Epoch_50_after_protopushing.pth
+
+python -m metrics.evaluate_ordinal_regression_test \
+  --model_path "$MODEL" \
+  --datapath data/$EXP \
+  --param_jsonpath config/params_example_ordinal.json \
+  --test_config config/datasplit/dr_config/dr_test_config.json \
+  --focus_class 3 \
+  --output_dir outputs/$EXP/metrics
+```
+
+All evaluation commands in this readme use paths of the form `trained_models/<experiment>/Epoch_50_after_protopushing.pth`.
+
+Pretrained weights for training from scratch (optional): `config/pretrained_model.ckpt` (see [GitHub Releases](https://github.com/AkshayGudi/CleverHansRegression/releases)).
 
 ---
 
