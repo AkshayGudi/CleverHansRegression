@@ -2,32 +2,24 @@
 """
 Last-layer retraining after prototype removal — INSightR-Net.
 
-This mirrors PRP paper Table I: remove selected prototypes, then retrain ONLY
-the last layer (everything else frozen) and re-evaluate. No feature update,
-no prototype update, no add_on_layers update.
+Simple steps:
+    1. Remove selected prototypes, 
+    2. then retrain ONLY the last layer (everything else frozen) and 
+    3. re-evaluate.
 
-Removed prototypes are kept removed throughout retraining via:
-  - zeroing the last_layer.weight columns at start, and
-  - registering a backward hook that masks gradients on those columns.
-
-This is a clean, standalone script — it does NOT modify existing training code.
-
-Example (class3_v14 model, remove prototype 3 from class-3 pool):
-
-  cd /sc/home/akshay.gudi/code/CleverHansRegression
-  source /sc/home/akshay.gudi/conda3/etc/profile.d/conda.sh
+Usage:
+  cd /path/to/CleverHansRegression
   conda activate new_insight_env
 
   PYTHONUNBUFFERED=1 python3 -m ablation.last_layer_retrain \
-    --ckpt bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/saved_models/Epoch_50_after_protopushing.pth \
+    --ckpt .../saved_models/Epoch_50_after_protopushing.pth \
     --param_jsonpath config/params_example_ordinal.json \
-    --datapath /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14 \
+    --datapath /path/to/data_store/DR/bld_artifact/class3_v14 \
     --train_split config/datasplit/dr_config/dr_train_config.json \
     --test_split  config/datasplit/dr_config/dr_test_config.json \
     --prototypes_to_remove 24 25 27 28 \
     --epochs 5 --lr 1e-3 --batch_size 30 --device cuda \
-    --output_dir bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/img/lastlayer_retrain_remove_class3_prt
-
+    --output_dir .../img/lastlayer_retrain_remove_class3_prt
 """
 
 from __future__ import annotations

@@ -25,20 +25,19 @@ so the methods being compared are identical to the ones in your thesis already.
 
 Example
 -------
-  cd /sc/home/akshay.gudi/code/CleverHansRegression
-  source /sc/home/akshay.gudi/conda3/etc/profile.d/conda.sh
+  cd /path/to/CleverHansRegression
   conda activate new_insight_env
 
   PYTHONUNBUFFERED=1 python3 -m evaluation.localization_metrics \\
-      --ckpt bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/saved_models/Epoch_50_after_protopushing.pth \\
+      --ckpt .../saved_models/Epoch_50_after_protopushing.pth \\
       --param_jsonpath config/params_example_ordinal.json \\
-      --original_dir /sc/home/akshay.gudi/data_store/DR/test \\
-      --artifact_dir /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14/test \\
-      --artifact_csv /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14/data_details_class3/test_labeled_data.csv \\
+      --original_dir /path/to/data_store/DR/test \\
+      --artifact_dir /path/to/data_store/DR/bld_artifact/class3_v14/test \\
+      --artifact_csv /path/to/data_store/DR/bld_artifact/class3_v14/data_details_class3/test_labeled_data.csv \\
       --target_class 3 \\
       --prototypes 24 25 27 28 \\
       --num_images 50 \\
-      --output_dir bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/img/localization_metrics_v14
+      --output_dir .../img/localization_metrics_v14
 
 Self-check (no data needed):
   python3 -m evaluation.localization_metrics --self_check

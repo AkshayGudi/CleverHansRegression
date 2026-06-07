@@ -2,27 +2,22 @@
 """
 Prototype ablation (no retraining) for INSightR-Net.
 
-Mirrors the *functional* idea of PRP paper Fig. 3: remove prototype contributions,
-re-evaluate on a fixed test subset, report drop in rounded-grade accuracy and
-change in MAE — **without** changing any weights.
+Remove a prototype, or pair of prototype, then re-evaluate the drop in accuracy and MAE using test set.
 
 Example (class 3, artifact-only, class-3 prototypes from your experiment):
 
   cd /path/to/CleverHansRegression
   python3 -m ablation.run_prototype_ablation \
-    --ckpt /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/saved_models/Epoch_50_after_protopushing.pth \
-    --param_jsonpath /sc/home/akshay.gudi/code/CleverHansRegression/config/params_example_ordinal.json \
-    --test_dir /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14/test \
-    --test_config /sc/home/akshay.gudi/code/CleverHansRegression/config/datasplit/dr_config/dr_test_config.json \
-    --artifact_csv /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14/data_details_class3/test_labeled_data.csv \
+    --ckpt .../saved_models/Epoch_50_after_protopushing.pth \
+    --param_jsonpath config/params_example_ordinal.json \
+    --test_dir /path/to/data_store/DR/bld_artifact/class3_v14/test \
+    --test_config config/datasplit/dr_config/dr_test_config.json \
+    --artifact_csv /path/to/data_store/DR/bld_artifact/class3_v14/data_details_class3/test_labeled_data.csv \
     --target_class 3 \
     --ablation_indices 19 21 24 25 26 27 28 29 30 31 32 33 35 37 39 3 \
-    --output_dir /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/img/ablation_epoch50 \
+    --output_dir .../img/ablation_epoch50 \
     --batch_size 16 \
     --device cuda
-
-  # Numerical self-check (no data paths required):
-  python3 ablation/run_prototype_ablation.py --self_check
 """
 
 from __future__ import annotations
@@ -58,7 +53,6 @@ from ablation.forward_ablation import (  # noqa: E402
 # Image loading (must match training: BGR, HWC -> CHW with permute(2,0,1))
 # ---------------------------------------------------------------------------
 
-
 def load_image_tensor(path: Path, img_size: int) -> torch.Tensor:
     """Load one image as (1, 3, H, W) float in [0, 1], BGR — same as main_generate_prp."""
     im = cv2.imread(str(path))
@@ -67,7 +61,6 @@ def load_image_tensor(path: Path, img_size: int) -> torch.Tensor:
     if im.shape[0] != img_size or im.shape[1] != img_size:
         im = cv2.resize(im, (img_size, img_size))
     norm = im.astype(np.float32) / 255.0
-    # Dimension fix: HWC -> CHW (see dataset / main_generate_prp).
     t = torch.from_numpy(norm).permute(2, 0, 1).unsqueeze(0).float()
     return t
 

@@ -854,7 +854,7 @@ if __name__ == "__main__":
                         default = 'config/pretrained_model.ckpt')
 
     # NEW FLAG
-    # ✅ Extract custom flag manually
+    # Extract custom flag manually
     use_saved_flag = get_flag_value("--use_saved", default=True)
     print(f"use_saved = {use_saved_flag}")
 

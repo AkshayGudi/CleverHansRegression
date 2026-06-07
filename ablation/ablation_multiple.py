@@ -11,25 +11,23 @@ Use case:
   - You want the direct effect of removing *that exact set* on the target class
   - No model weights are changed; only forward-time prototype contributions are masked
 
-source /sc/home/akshay.gudi/conda3/etc/profile.d/conda.sh
-conda activate new_insight_env
+  cd /path/to/CleverHansRegression
+  conda activate new_insight_env
 
-python3 -m ablation.ablation_multiple \
-  --ckpt /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/saved_models/Epoch_50_after_protopushing.pth \
-  --param_jsonpath /sc/home/akshay.gudi/code/CleverHansRegression/config/params_example_ordinal.json \
-  --test_dir /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14/test \
-  --test_config /sc/home/akshay.gudi/code/CleverHansRegression/config/datasplit/dr_config/dr_test_config.json \
-  --target_class 3 \
-  --prototypes_to_remove 3 24 25 \
-  --batch_size 16 \
-  --device cuda \
-  --output_dir /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v14_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_28_Apr_1/img/ablation_multiple_3_24_25  
+  python3 -m ablation.ablation_multiple \
+    --ckpt .../saved_models/Epoch_50_after_protopushing.pth \
+    --param_jsonpath config/params_example_ordinal.json \
+    --test_dir /path/to/data_store/DR/bld_artifact/class3_v14/test \
+    --test_config config/datasplit/dr_config/dr_test_config.json \
+    --target_class 3 \
+    --prototypes_to_remove 3 24 25 \
+    --batch_size 16 \
+    --device cuda \
+    --output_dir .../img/ablation_multiple_3_24_25
 
-If you want artifact-only subset (only images with artifact label 1), add:
+If we want artifact-only subset (only grade 3 images with artifact label 1), then we add:
     --artifact_only
-    --artifact_csv /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v14/data_details_class3/test_labeled_data.csv
-
-
+    --artifact_csv /path/to/data_store/DR/bld_artifact/class3_v14/data_details_class3/test_labeled_data.csv
 """
 
 from __future__ import annotations
@@ -48,11 +46,11 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from define_parameters import NetworkParams  # noqa: E402
-from helpers import load_json  # noqa: E402
-from insight_training.model import construct_PPNet  # noqa: E402
+from define_parameters import NetworkParams  
+from helpers import load_json  
+from insight_training.model import construct_PPNet
 
-from ablation.run_prototype_ablation import (  # noqa: E402
+from ablation.run_prototype_ablation import (  
     assert_masked_forward_matches_standard,
     discover_eval_image_paths,
     evaluate_mask,
@@ -190,7 +188,7 @@ def main() -> None:
 
     # Quick correctness check: empty mask path matches standard forward.
     with torch.no_grad():
-        from ablation.run_prototype_ablation import load_image_tensor  # noqa: E402
+        from ablation.run_prototype_ablation import load_image_tensor  
         first = load_image_tensor(paths_labels[0][0], img_size).to(device)
         assert_masked_forward_matches_standard(ppnet, first)
 

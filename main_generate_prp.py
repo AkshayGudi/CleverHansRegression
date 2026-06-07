@@ -33,16 +33,6 @@ Usage:
     Note: Use the *_after_protopushing.pth file at the latest epoch from
     the saved_models/ folder. This ensures prototypes are pushed to real
     images and prototype_images are populated for visualization.
-
-Example usage:
-cd /sc/home/akshay.gudi/code/CleverHansRegression && conda activate new_insight_env
-
-python3 main_generate_prp.py \
-  --model_path=/sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v4_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_25_Apr_3/saved_models/Epoch_50_after_protopushing.pth \
-  --param_jsonpath=/sc/home/akshay.gudi/code/CleverHansRegression/config/params_example_ordinal.json \
-  --output_dir=/sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v4_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_25_Apr_3/img/prp_class3_prototypes_epoch50 \
-  --prototypes 2 8 11 16 22 23 24 25 26 27 31 33 37 38 39 
-
 """
 # New version of LRP code
 
