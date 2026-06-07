@@ -1,35 +1,18 @@
 """
-Layer-wise Relevance Propagation (LRP) general utilities for ResNet-based models,
-extended with Pruned LRP (PLRP-lambda; Yanez Sarmiento et al., 2024).
+Pruned PRP code for the CleverHansRegression PRP-INSightR-Net pipeline.
 
-This file is a direct copy of ../lrp_general6.py with PLRP-lambda pruning added
-to the parametric-layer wrappers (Conv2d beta=0 and Linear epsilon). All other
-wrappers (the first-layer z-beta conv, pooling, ReLU, Sigmoid, eltwise sum) are
-left mathematically unchanged.
-
-PLRP-lambda procedure (per Section 3.2 of the paper) applied at layer l, after
-running the standard LRP backward to obtain the unpruned relevance vector R:
+Simple steps for PLRP-lambda pruning:
   1. Sort positive entries of R ascending; find threshold theta_pos such that
      entries with R_i <= theta_pos sum to <= p_pos * total_positive_mass.
   2. Sort |negative| entries of R ascending; find threshold theta_neg such that
      entries with |R_i| <= theta_neg sum to <= p_neg * total_negative_mass.
   3. Zero out entries with theta_neg < R_i <= theta_pos, then rescale the
-     surviving positive (resp. negative) entries by lambda = total / kept_sum
-     so the layer's positive (resp. negative) mass is preserved.
+     remaining positive (also negative) entries by lambda = total / kept_sum
+     so that for each layer positive (and also negative) mass is preserved.
 
-When p_pos == p_neg == 0 the rescaling is skipped via an early return, so the
-output is bit-identical to the unpruned LRP backward.
+When p_pos == p_neg == 0 the we get back result like normal PRP.
 
-PLRP scope (matches paper, Section 3.2): "We do not prune the relevance
-propagation in the last step, i.e., the first layer is left unpruned."
-The first-layer wrapper (conv2d_zbeta_wrapper_fct) therefore performs no
-pruning. The PLRP code base also leaves pooling / sum / BN / activation
-wrappers unpruned -- only Convolution and Linear are hooked. We follow that.
-
-References:
-  - PRP (parent code): https://github.com/SrishtiGautam/PRP
-  - PLRP (Yanez Sarmiento et al., ECML PKDD 2024):
-        https://gitlab.com/dacs-hpi/plrp
+In main PLRP paper, the first layer is left unpruned. We follow that.
 """
 
 import torch
@@ -54,9 +37,7 @@ def set_plrp_params(p_pos: float = 0.0, p_neg: float = 0.0) -> None:
 
     ``p_pos`` is the proportion of positive relevance mass to prune at each
     parametric layer. ``p_neg`` is the proportion of negative relevance mass
-    to prune. Both values must be in ``[0, 1)``. The default ``(0, 0)``
-    recovers the standard (unpruned) LRP behaviour exactly; in that case the
-    pruning routine returns its input unchanged.
+    to prune. Both values are within 0 and 1.
     """
     if not (0.0 <= p_pos < 1.0):
         raise ValueError(f"p_pos must be in [0, 1); got {p_pos}")
@@ -75,15 +56,6 @@ def get_plrp_params() -> tuple:
 def _prune_relevance_lambda(R: torch.Tensor, p_pos: float, p_neg: float,
                             eps: float = 1e-12) -> torch.Tensor:
     """PLRP-lambda: per-sample threshold + rescale of a relevance tensor.
-
-    Acts independently on each sample along the leading axis (treated as the
-    batch axis). For batches/stacks larger than 1, each row is pruned
-    separately, matching the PLRP reference implementation in ``plrp.py``.
-
-    Implementation note: this routine uses an explicit Python loop over the
-    leading axis. For batch size 1 (the common PRP use-case where one image
-    is explained at a time) the loop has a single iteration and the cost is
-    dominated by the sort + cumsum.
     """
     if (p_pos <= 0.0) and (p_neg <= 0.0):
         return R
@@ -479,9 +451,8 @@ class conv2d_beta0_wrapper_fct(torch.autograd.Function):
 class conv2d_zbeta_wrapper_fct(torch.autograd.Function):
     """LRP z-beta rule for the first Conv2d layer.
 
-    The first (input-touching) layer is intentionally NOT pruned, per PLRP
-    paper Section 3.2: "We do not prune the relevance propagation in the
-    last step, i.e., the first layer is left unpruned."
+    The first (input-touching) layer is intentionally NOT pruned, because it also suggested in PLRP
+    paper
     """
 
     @staticmethod

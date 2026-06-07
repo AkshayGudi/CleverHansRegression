@@ -27,11 +27,11 @@ Outputs (under ``--output_dir``):
 
 Example (position CSV from overlay pipeline; same flags style as localization_metrics):
 
-  cd /sc/home/akshay.gudi/code/CleverHansRegression
+  cd /path/to/CleverHansRegression
   conda activate new_insight_env
 
   python3 plrp_ext/compare_prp_plrp_localization.py \\
-      --ckpt bld_art_25_Apr/class3_v14_2_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_03_May_3/saved_models/Epoch_50_after_protopushing.pth \\
+      --ckpt .../saved_models/Epoch_50_after_protopushing.pth \\
       --param_jsonpath config/params_example_ordinal.json \\
       --artifact_dir /path/to/artifact/test/jpeg \\
       --artifact_csv /path/to/test_labeled_data.csv \\
@@ -65,7 +65,7 @@ from define_parameters import NetworkParams  # noqa: E402
 from helpers import load_json  # noqa: E402
 from insight_prp import PRPCanonizedModel as PRPCanonizedModelBaseline  # noqa: E402
 from insight_prp import generate_prp_image as generate_prp_image_baseline  # noqa: E402
-from relevance_ordering_paper import (  # noqa: E402
+from relevance_ordering_general import (  # noqa: E402
     get_prototype_heatmap,
     load_image,
     load_ppnet,

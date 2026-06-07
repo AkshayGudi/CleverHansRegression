@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
 """
-Prototype ablation (custom multiple prototypes, no retraining) for INSightR-Net.
+Evaluate by removing multipe prototypes
 
-This script applies the same logic as ``run_prototype_ablation.py`` but evaluates
-exactly one user-provided multi-prototype mask (plus baseline/no-removal), instead
-of automatically testing all singletons and pairs.
-
-Use case:
-  - You already identified a set of prototypes (e.g., from PRP / pairwise ablation)
-  - You want the direct effect of removing *that exact set* on the target class
-  - No model weights are changed; only forward-time prototype contributions are masked
+Usage example:
 
   cd /path/to/CleverHansRegression
   conda activate new_insight_env

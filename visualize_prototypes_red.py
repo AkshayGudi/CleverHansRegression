@@ -23,14 +23,13 @@ populates:
 
 Usage example::
 
-    cd /sc/home/akshay.gudi/code/CleverHansRegression
-    source /sc/home/akshay.gudi/conda3/etc/profile.d/conda.sh
+    cd /path/to/CleverHansRegression
     conda activate new_insight_env
 
     PYTHONUNBUFFERED=1 python3 visualize_prototypes_red.py \
-        --ckpt bld_art_25_Apr/class3_v8_fix_50_43/exp1/DR_25_Jan_2026_1/Fold0_DR_01_May_27/saved_models/Epoch_50_after_protopushing.pth \
+        --ckpt .../saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath config/params_example_ordinal.json \
-        --output_dir bld_art_25_Apr/class3_v8_fix_50_43/exp1/DR_25_Jan_2026_1/Fold0_DR_01_May_27/img/prototypes/red_activation_clean/epoch_50
+        --output_dir .../img/prototypes/red_activation_clean/epoch_50
 
     # Only specific prototypes:
     PYTHONUNBUFFERED=1 python3 visualize_prototypes_red.py \

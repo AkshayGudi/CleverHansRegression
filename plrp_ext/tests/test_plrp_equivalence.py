@@ -16,7 +16,7 @@ Pass criterion (all must hold):
 If this test FAILS, do NOT trust any PLRP results from this code base.
 Investigate before proceeding.
 
-Usage (from /sc/home/akshay.gudi/code/CleverHansRegression):
+Usage (from the CleverHansRegression repository root):
 
     conda activate new_insight_env
 

@@ -19,7 +19,7 @@ Protocol:
 
 Usage:
     # Process only images from a class CSV (e.g. all class-3 test images):
-    python relevance_ordering_paper.py \
+    python relevance_ordering_general.py \
         --model_path saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath config/params_example_ordinal.json \
         --image_dir /path/to/test/images \
@@ -28,7 +28,7 @@ Usage:
         --topk_prototypes 3
 
     # Process ALL test images in a folder (default):
-    python relevance_ordering_paper.py \
+    python relevance_ordering_general.py \
         --model_path saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath config/params_example_ordinal.json \
         --image_dir /path/to/test/images \
@@ -36,7 +36,7 @@ Usage:
         --topk_prototypes 3
 
     # Process only a random subset of N images:
-    python relevance_ordering_paper.py \
+    python relevance_ordering_general.py \
         --model_path saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath config/params_example_ordinal.json \
         --image_dir /path/to/test/images \
@@ -44,7 +44,7 @@ Usage:
         --num_images 50
 
     # Single image with a specific prototype:
-    python relevance_ordering_paper.py \
+    python relevance_ordering_general.py \
         --model_path saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath config/params_example_ordinal.json \
         --image_path /path/to/single_image.jpeg \
@@ -52,7 +52,7 @@ Usage:
         --prototype_index 42
 
     # No test folder: use only the pushed image stored in the checkpoint (prototype_images):
-    python relevance_ordering_paper.py \
+    python relevance_ordering_general.py \
         --model_path saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath config/params_example_ordinal.json \
         --output_dir relevance_ordering_stored \

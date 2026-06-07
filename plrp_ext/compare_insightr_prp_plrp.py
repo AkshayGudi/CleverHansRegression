@@ -6,27 +6,13 @@ Side-by-side **4-panel** visualization for each prototype (or each prototype
 on a test image):
 
     Panel 1: Original image
-    Panel 2: INSightR-Net activation overlay   (JET colormap)
-    Panel 3: Baseline PRP relevance overlay     (red/yellow from LRP)
-    Panel 4: PLRP-PRP relevance overlay         (red/yellow from PLRP-lambda LRP)
+    Panel 2: INSightR-Net activation overlay 
+    Panel 3: Baseline PRP relevance overlay
+    Panel 4: PLRP-PRP relevance overlay
 
-This is intended for thesis figures that demonstrate the progression
-INSightR-Net  ->  PRP  ->  PLRP-PRP on the same prototype and same image.
-
-Isolation guarantees (matching the rest of plrp_ext/):
-  * Does **not** modify any existing file outside plrp_ext/.
-  * Uses the unmodified ``insight_prp`` pipeline for the baseline PRP.
-  * Uses the ``plrp_ext.insight_prp_plrp`` pipeline for PLRP-PRP.
-  * ``set_plrp_params(...)`` only mutates state in
-    ``plrp_ext.lrp_general6_plrp``; the baseline pipeline does not import
-    that module and is therefore unaffected.
-  * Loads three **independent** PPNet instances (one uncanonized, one for
-    baseline canonization, one for PLRP canonization) so that the in-place
-    canonization of one pipeline never corrupts the other.
-
-Usage
+Usage commands:
 -----
-    cd /sc/home/akshay.gudi/code/CleverHansRegression
+    cd /path/to/CleverHansRegression
     conda activate new_insight_env
 
     # 1) Stored prototype mode (uses each prototype's saved image + actmap):
@@ -55,12 +41,6 @@ Usage
         --output_dir plrp_ext/outputs/three_way_sanity
 """
 
-# ---------------------------------------------------------------------------
-# When this file is run as ``python3 plrp_ext/compare_insightr_prp_plrp.py``,
-# Python prepends ``plrp_ext/`` to sys.path instead of the project root, so
-# imports like ``helpers`` and ``insight_prp`` would fail. Prepend the repo
-# root explicitly, matching the pattern used by plrp_ext/main_generate_plrp.py.
-# ---------------------------------------------------------------------------
 import sys
 from pathlib import Path
 
@@ -79,14 +59,12 @@ from helpers import load_json
 from define_parameters import NetworkParams
 from insight_training.model import construct_PPNet
 
-# Baseline PRP pipeline (unmodified).
 from insight_prp import (
     PRPCanonizedModel as build_baseline_canon,
     generate_prp_image as generate_prp_baseline,
     _create_overlay as create_prp_red_overlay,
 )
 
-# PLRP-PRP pipeline (isolated under plrp_ext/).
 from plrp_ext.lrp_general6_plrp import set_plrp_params, get_plrp_params
 from plrp_ext.insight_prp_plrp import (
     PRPCanonizedModel as build_plrp_canon,
@@ -173,17 +151,8 @@ def _resolve_prototype_indices(prototype_number, prototypes_list):
 def create_insightr_activation_overlay(orig_img_np, actmap_np, max_alpha=0.85):
     """Red/yellow activation overlay for the INSightR-Net activation map.
 
-    Visually consistent with the PRP red/yellow overlay used in panels 3 and
-    4, so all three explanation panels share the same colour language:
-
       * High activation -> bright red/yellow
       * Low activation  -> dimmed original image
-
-    Algorithm: upsample the feature-space activation map to the image size,
-    min-max normalize to [0, 1], square-root for contrast, then blend a
-    red-with-yellow-tint highlight on top of a slightly dimmed original.
-
-    This mirrors ``create_insightr_red_overlay`` in main_generate_prp.py.
     """
     h, w = orig_img_np.shape[:2]
     upsampled = cv2.resize(actmap_np, (w, h), interpolation=cv2.INTER_CUBIC)
@@ -277,7 +246,6 @@ def run_stored_prototype(pno, ppnet_baseline_canon, ppnet_plrp_canon,
     """Run all three explanations for one stored prototype.
 
     Returns True on success, False if the prototype has no stored image
-    (i.e. ``push_prototypes`` has not run for this slot yet).
     """
     proto_img_tensor = ppnet_baseline_canon.prototype_images[pno]
     if proto_img_tensor.max() == 0:
@@ -412,8 +380,8 @@ def main():
           f"proto_shape={network_params.proto_shape}, "
           f"img_size={network_params.img_size}")
 
-    # Load three INDEPENDENT model instances.
-    # Canonization is in-place; sharing a model would corrupt the other pipeline.
+    # Load three INDEPENDENT model instances because one is needed for INSightR-Net activations,
+    # one for baseline PRP, and one for PLRP-PRP.
     print("Loading three PPNet instances:")
     print("  1/3 -> ppnet_orig          (uncanonized; for INSightR-Net activations)")
     ppnet_orig = load_ppnet_from_checkpoint(args.model_path, network_params, device)

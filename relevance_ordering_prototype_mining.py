@@ -8,7 +8,7 @@ Label convention (CSV columns: image_name, artifact_label):
 For each of two groups (with artifact / without), draws N random images (default 50),
 runs the insertion relevance-ordering test for EVERY prototype index.
 
-PRP maps are computed via the same path as relevance_ordering_paper.py:
+PRP maps are computed via the same path as relevance_ordering_general.py:
   insight_prp.generate_prp_image  (LRP backprop from prototype similarity)
 
 "Bad" prototypes (paper Fig.~9 style): high similarity even when pixels are revealed
@@ -47,14 +47,14 @@ import torch
 from define_parameters import NetworkParams
 from helpers import load_json
 from insight_prp import PRPCanonizedModel
-from relevance_ordering_paper import (
+from relevance_ordering_general import (
     load_ppnet,
     load_image,
     process_single_image,
     plot_mean_curves,
 )
 
-# PRP heatmaps: relevance_ordering_paper.get_prp_heatmap → insight_prp.generate_prp_image
+# PRP heatmaps: relevance_ordering_general.get_prp_heatmap → insight_prp.generate_prp_image
 
 
 def load_paths_by_artifact_labels(csv_path, image_dir):
@@ -363,7 +363,7 @@ def main():
     prp_model = PRPCanonizedModel(ppnet_for_prp).to(device)
 
     print(f"num_prototypes={ppnet.num_prototypes}")
-    print("PRP maps: insight_prp.generate_prp_image (via relevance_ordering_paper.process_single_image)")
+    print("PRP maps: insight_prp.generate_prp_image (via relevance_ordering_general.process_single_image)")
 
     with_paths, clean_paths = load_paths_by_artifact_labels(
         args.artifact_labels_csv, args.image_dir

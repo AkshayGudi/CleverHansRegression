@@ -2,12 +2,6 @@
 """
 Ordinal regression test metrics for INSightR-Net (same setup as training / confusion matrix).
 
-Uses existing project code only:
-  - ``compute_confmatrix_from_model.load_ppnet``, ``run_inference``
-  - ``MyDataModuleDiabRet`` + ``Parameters`` (same as ``main_trainer`` / ``compute_confmatrix_from_model``)
-  - ``sklearn.metrics`` (already used in ``compute_confmatrix_from_model``)
-  - Metric style aligned with ``ablation/last_layer_retrain.evaluate`` (rounded acc + MAE overall / per class)
-
 Computed metrics
 -----------------
 **Regression (continuous output vs ordinal true label 1..K)**
@@ -29,7 +23,7 @@ Outputs (in ``--output_dir``)
   - ``regression_test_summary.json`` — full test metrics (top level) + ``metrics_true_class_K_only``
   - ``predictions_test.csv`` — optional mirror of per-image preds (same columns as ``compute_confmatrix_from_model``)
 
-Run from CleverHansRegression root::
+In order to run from CleverHansRegression root::
 
     python -m metrics.evaluate_ordinal_regression_test \\
         --model_path path/to/Epoch_50_after_protopushing.pth \\
@@ -40,13 +34,6 @@ Run from CleverHansRegression root::
 Optional: point test split at a different JSON::
 
     --test_config config/datasplit/dr_config/dr_test_config.json
-
-CPU-only recap from an existing predictions file (no model)::
-
-    python -m metrics.evaluate_ordinal_regression_test \\
-        --from_predictions_csv path/to/predictions_test.csv \\
-        --min_label 1 --max_label 5 \\
-        --output_dir path/to/save_metrics
 """
 from __future__ import annotations
 
@@ -162,8 +149,7 @@ def _aggregate_metrics_true_class_only(
     focus_class: int,
 ) -> Dict[str, Any]:
     """
-    Same metrics as ``_aggregate_metrics`` but restricted to samples whose true label
-    equals ``focus_class`` (e.g. class 3 for artifact studies).
+    metrics for artifact grade, which is class 3
     """
     mask = true_labels == focus_class
     n = int(mask.sum())

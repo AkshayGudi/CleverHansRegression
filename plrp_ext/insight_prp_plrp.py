@@ -1,19 +1,7 @@
 """
 Prototypical Relevance Propagation with Pruned LRP (PLRP-PRP) for INSightR-Net.
 
-Direct copy of ../insight_prp.py with imports rewired to the PLRP-extended
-LRP utilities in lrp_general6_plrp.py. The custom L2 prototype rule
-(``l2_lrp_insightr``) is intentionally identical to the parent file: PLRP is
-applied only to the standard backbone rules (Conv2d beta=0 and Linear epsilon),
-following the scope defined in Yanez Sarmiento et al., 2024 (Section 3).
-
-When PLRP is disabled (p_pos == p_neg == 0, the default), this file produces
-heatmaps that are bit-identical to the parent insight_prp.py. This invariant
-is verified by ``tests/test_plrp_equivalence.py``.
-
-Imports below explicitly target the local PLRP-extended modules. The parent
-module (``insight_prp.py``) is never imported, so it is impossible for code in
-this file to alter the behaviour of the standard PRP pipeline.
+When PLRP is disabled (p_pos == p_neg == 0, the default), the we get just like normal PRP.
 """
 
 from __future__ import print_function, division
@@ -318,10 +306,12 @@ def PRPCanonizedModel(ppnet, lrp_params=None, lrp_layer2method=None):
     """
     Wraps a trained INSightR-Net (ppnet) with LRP-aware layers for PLRP-PRP.
 
-    Identical to the parent insight_prp.PRPCanonizedModel except that the
+    Identical to the prp except that the
     wrappers come from lrp_general6_plrp (which apply PLRP-lambda pruning at
     Conv2d beta=0 and Linear epsilon backwards when set_plrp_params has been
     called with non-zero proportions).
+
+    Since INSightR-Net has different architectures, we try to take care of that also.
     """
     if lrp_params is None:
         lrp_params = LRP_PARAMS

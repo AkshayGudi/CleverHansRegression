@@ -3,21 +3,11 @@ Entry point for generating PLRP-PRP (Pruned Layer-wise Relevance Propagation
 applied to Prototypical Relevance Propagation) heatmaps for a trained
 INSightR-Net model.
 
-This is a copy of ../main_generate_prp.py with two extra flags:
-    --plrp_p_pos  proportion of positive relevance to prune at every
-                  parametric layer (Conv2d beta=0 / Linear epsilon).
-                  Default: 0.0 (no pruning, behaves identically to
-                  the standard PRP pipeline).
-    --plrp_p_neg  proportion of negative relevance to prune. Default 0.0.
-
-Run from /sc/home/akshay.gudi/code/CleverHansRegression with the same
-checkpoint, params JSON, and image set as your existing PRP runs.
-
-Examples
+Usage
 --------
-1) Sanity check -- p=0 must produce the same heatmap as main_generate_prp.py:
+1) First we can sanity check where p=0 must produce the same heatmap as prp:
 
-    cd /sc/home/akshay.gudi/code/CleverHansRegression
+    cd /path/to/CleverHansRegression
     conda activate new_insight_env
 
     python3 plrp_ext/main_generate_plrp.py \
@@ -28,7 +18,7 @@ Examples
         --plrp_p_pos 0.0 \
         --plrp_p_neg 0.0
 
-2) Real PLRP-lambda run (paper defaults p_pos=0.25, p_neg=0.125):
+2) Real PLRP-lambda run:
 
     python3 plrp_ext/main_generate_plrp.py \
         --model_path=/path/to/Epoch_50_after_protopushing.pth \
@@ -50,11 +40,6 @@ Examples
         --plrp_p_neg 0.125
 """
 
-# When this file is run as ``python3 plrp_ext/main_generate_plrp.py``, Python
-# puts ``plrp_ext/`` first on sys.path, not the CleverHansRegression project
-# root. Top-level packages like ``helpers`` and ``define_parameters`` then
-# fail to import. Prepend the repo root so the script behaves like
-# ``main_generate_prp.py`` run from the project directory.
 import sys
 from pathlib import Path
 

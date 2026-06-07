@@ -1,3 +1,4 @@
+Note to self
 1. First run the prepare_data.py code
     - This code marks a subset of train and test images to add yellow patch.
 

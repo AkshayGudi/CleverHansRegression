@@ -2,26 +2,19 @@
 """
 Ground-truth localization metrics for PRP vs InsightR-Net activation heatmaps.
 
-This script complements the relevance-ordering test by quantifying *how well*
-each explanation method localizes the inserted Clever-Hans artifact, using the
-known ground-truth artifact region.
-
-Metrics implemented (standard in the XAI literature):
-  - Pointing Game (PG)         — Zhang et al., IJCV 2018
-  - Relevance Mass Accuracy    — Arras et al., CLEVR-XAI, Information Fusion 2022
-  - Relevance Rank Accuracy    — Arras et al., 2022
-  - Pixel-wise ROC AUC         — standard in saliency benchmarks
-  - Top-K IoU                  — standard region-overlap measure
+Metrics
+  - Pointing Game (PG)
+  - Relevance Mass Accuracy
+  - Relevance Rank Accuracy
+  - Pixel-wise ROC AUC
+  - Top-K IoU
 
 Ground-truth artifact mask is derived per-image via DIFF between the
 original (no-artifact) image and the artifact-added image. This handles
 arbitrary artifact positions (random or fixed) and the feathered/Poisson
-blending used in overlay_patches_conditionally.py without requiring any
-change to the augmentation pipeline.
+blending.
 
-Heatmaps re-use the *exact same* generators as the relevance-ordering test
-(``relevance_ordering_paper.get_prototype_heatmap`` and ``get_prp_heatmap``),
-so the methods being compared are identical to the ones in your thesis already.
+reusing the same heatmaps as in relevance-ordering test, so that things are comparable.
 
 Example
 -------
@@ -65,7 +58,7 @@ if str(_ROOT) not in sys.path:
 from define_parameters import NetworkParams  # noqa: E402
 from helpers import load_json  # noqa: E402
 from insight_prp import PRPCanonizedModel  # noqa: E402
-from relevance_ordering_paper import (  # noqa: E402
+from relevance_ordering_general import (  # noqa: E402
     get_prp_heatmap,
     get_prototype_heatmap,
     load_image,
@@ -88,15 +81,7 @@ def derive_gt_mask_from_position(
     feather_amount: int = 15,
 ) -> np.ndarray:
     """
-    Reproduce the same feathered-circle GT mask used by
-    ``DR_Artifacts/augmentations/overlay_patches_conditionally.py`` from the
-    saved (center_x, center_y, target_size) and rescale to ``img_size``.
-
-    The augmentation places a target_size x target_size patch with a feathered
-    circle mask of radius ``target_size//2 - feather_amount``. cv2.seamlessClone
-    centers that mask at (center_x, center_y) in the original image. We
-    reconstruct the binary mask in the original image's coordinate frame, then
-    resize it to the model's input resolution.
+    Get the binary mask for the artifact region from the center_x, center_y, target_size.
 
     Args:
         center_x, center_y: artifact center in the *original* image (pixels).
@@ -119,7 +104,8 @@ def derive_gt_mask_from_position(
 
 def load_position_csv(path: Path) -> Dict[str, Dict[str, int]]:
     """
-    Read artifact_pos_*.csv produced by overlay_patches_conditionally.py.
+    Read artifact_pos_*.csv which has the center_x, center_y, target_size, image_w, image_h 
+    information for each image with artifact label 1
 
     Returns dict: image_stem -> {center_x, center_y, target_size, image_w, image_h}
     """
@@ -157,12 +143,10 @@ def derive_gt_mask_from_diff(
 
     Steps:
       1. Read both images, resize to ``img_size``.
-      2. Per-pixel L1 difference summed over channels (uint16 to avoid overflow).
+      2. Per-pixel L1 difference summed over channels
       3. Threshold at ``diff_threshold`` to get a binary mask.
-      4. Morphological closing then opening (kernel ``morph_kernel``) to
-         remove speckle noise from JPEG re-encoding.
-      5. Keep only the largest connected component if it is larger than
-         ``min_blob_area_frac * img_size**2`` pixels (rejects pure-noise diffs).
+      4. Morphological closing then opening (kernel ``morph_kernel``) to remove speckle noise from JPEG re-encoding.
+      5. Keep only the largest connected component if it is larger than ``min_blob_area_frac * img_size**2`` pixels (rejects pure-noise diffs).
 
     Returns:
         Binary mask (H, W) of dtype uint8 with values {0, 1}, or ``None`` if no
@@ -315,7 +299,7 @@ def discover_evaluation_images(
     artifact_dir: Path,
 ) -> List[Tuple[str, Path, Path]]:
     """
-    Read the artifact-labeling CSV (used by overlay_patches_conditionally.py).
+    Read the artifact-labeling CSV
     Keep only rows with ``artifact_label == 1`` whose JPEG exists in BOTH
     ``original_dir`` and ``artifact_dir`` so we can derive the GT mask via diff.
 
@@ -370,8 +354,6 @@ def _self_check() -> None:
     assert abs(res["relevance_rank_accuracy"] - 0.0) < 1e-9, res
     assert res["topk_iou"] == 0.0, res
 
-    # AUC needs an *anti-correlated* heatmap (positives strictly < negatives)
-    # to be unambiguously below 0.5.
     hi = np.full((H, W), 1.0, dtype=np.float32)
     hi[mask == 1] = 0.0
     res = all_metrics(hi, mask)
@@ -382,7 +364,7 @@ def _self_check() -> None:
     res = all_metrics(hr, mask)
     assert 0.2 <= res["localization_auc"] <= 0.8, res
 
-    # Position-mask sanity: feathered circle should land at the requested center
+    # feathered circle should land at the requested center
     # and resize correctly to the model resolution.
     pmask = derive_gt_mask_from_position(
         center_x=200, center_y=300,
@@ -437,7 +419,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="",
         help=(
-            "Optional artifact_pos_*.csv from overlay_patches_conditionally.py "
+            "Optional artifact_pos_*.csv which has artifact position information "
             "(image_name, center_x, center_y, target_size, image_w, image_h). "
             "If provided, GT masks are reconstructed from these positions instead "
             "of being derived by image diff."
@@ -447,7 +429,7 @@ def parse_args() -> argparse.Namespace:
         "--feather_amount",
         type=int,
         default=15,
-        help="Feather amount used by overlay_patches_conditionally.create_feathered_mask (default 15).",
+        help="Feather amount used during artifact overlay (default 15).",
     )
     p.add_argument("--target_class", type=str, default="", help="Optional: keep only images whose label matches (uses dr_test_config.json if provided)")
     p.add_argument("--test_config", type=str, default="", help="Optional dr_test_config.json for label filtering")
@@ -523,8 +505,6 @@ def main() -> None:
     ppnet_for_prp.base_architecture = network_params.base_architecture
     prp_model = PRPCanonizedModel(ppnet_for_prp).to(device).eval()
 
-    # In position-based mode, original_dir may be omitted; pass artifact_dir as
-    # a stand-in to satisfy the existence check (we only diff if no position CSV).
     discovery_original = Path(args.original_dir) if args.original_dir else Path(args.artifact_dir)
     items = discover_evaluation_images(
         artifact_csv=Path(args.artifact_csv),

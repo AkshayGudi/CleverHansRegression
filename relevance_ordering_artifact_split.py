@@ -1,7 +1,7 @@
 """
 Relevance ordering test split by artifact presence (artifact_label in CSV).
 
-Same insertion protocol as relevance_ordering_paper.py, but:
+Same insertion protocol as relevance_ordering_general.py, but:
   - Input CSV must have columns: image_name, artifact_label
     (image_name without .jpeg suffix; artifact_label 1 = artifact, 0 = clean)
   - Runs the full test separately for artifact_label==1 and artifact_label==0
@@ -32,8 +32,8 @@ from helpers import load_json
 from insight_prp import PRPCanonizedModel
 from insight_training.model import construct_PPNet
 
-# Reuse all core logic from relevance_ordering_paper.py (single source of truth)
-from relevance_ordering_paper import (
+# Reuse all core logic from relevance_ordering_general.py (single source of truth)
+from relevance_ordering_general import (
     load_ppnet,
     load_image,
     process_single_image,

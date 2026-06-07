@@ -30,9 +30,6 @@ Usage:
         --output_dir=prp_output \
         --test_image_path=path/to/test_image.jpeg
 
-    Note: Use the *_after_protopushing.pth file at the latest epoch from
-    the saved_models/ folder. This ensures prototypes are pushed to real
-    images and prototype_images are populated for visualization.
 """
 # New version of LRP code
 
@@ -56,7 +53,6 @@ from thesis_figure_export import (
     save_figure_multi,
 )
 
-# Updated by ``main()`` from CLI; used by comparison figure writers.
 _FIG_EXPORT: ThesisFigureExport = THESIS_3PANEL
 
 
@@ -145,10 +141,6 @@ def create_comparison_image(orig_img_np, insightr_overlay, prp_overlay, proto_di
       2. INSightR-Net activation overlay (JET colormap, from training)
       3. PRP relevance overlay (red/yellow highlights from LRP)
 
-    This allows direct visual comparison of where INSightR-Net's
-    activation-based explanation focuses vs. where PRP's pixel-level
-    relevance propagation focuses.
-
     Args:
         orig_img_np: Original prototype image, numpy array (H, W, 3) in [0, 1].
         insightr_overlay: INSightR-Net activation overlay, numpy array (H, W, 3) in [0, 1].
@@ -216,10 +208,6 @@ def create_red_comparison_image(orig_img_np, insightr_red_overlay, prp_overlay, 
 def load_ppnet_from_checkpoint(model_path, network_params, device):
     """
     Load PPNet from a saved model file.
-
-    Supports:
-      - .pth files from saved_models/ (ppnet.state_dict() — preferred)
-      - .ckpt files from checkpoints/ (Lightning checkpoint with 'ppnet.' prefixed keys)
     """
     checkpoint = torch.load(model_path, map_location=device)
 
@@ -245,10 +233,6 @@ def load_ppnet_from_checkpoint(model_path, network_params, device):
 
 
 def _resolve_prototype_indices(prototype_number, prototypes_list):
-    """
-    Returns None (meaning all prototypes), or a list of int indices.
-    prototypes_list takes precedence if both are given (caller should error first).
-    """
     if prototypes_list is not None:
         return list(dict.fromkeys(prototypes_list))
     if prototype_number is not None:
@@ -310,8 +294,7 @@ def load_test_image(image_path, img_size=540):
         the standard PyTorch (C, H, W) layout, BGR channels (consistent
         with how the model was trained via ``cv2.imread`` + permute).
       - ``raw_rgb_np`` is the un-permuted H x W x 3 RGB image in [0, 1],
-        suitable for overlaying heatmaps on top of the test image as a
-        human would view it.
+        suitable for overlaying heatmaps on top of the test image.
     """
     jpeg_im = cv2.imread(str(image_path))
     if jpeg_im is None:

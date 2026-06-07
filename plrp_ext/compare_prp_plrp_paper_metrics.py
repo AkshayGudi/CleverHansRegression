@@ -1,29 +1,7 @@
 #!/usr/bin/env python3
 """
-plrp_ext/compare_prp_plrp_paper_metrics.py
-==========================================
-
-Compare **Baseline PRP vs PLRP-PRP** (and optionally prototype-activation)
-on the **two strongest, most distinctive metrics from the PLRP paper**
-"Sparse Explanations of Neural Networks Using Pruned Layer-Wise Relevance
-Propagation" (Hatefi et al.):
-
-  1. **Gini coefficient** of the relevance map (sparsity / concentration).
-     - Range [0, 1]; higher means a small number of pixels carry most of the
-       relevance mass.
-     - This is the PLRP paper's headline sparsity metric. PLRP is *designed*
-       to win this, which makes it a strong, defensible empirical claim.
-
-  2. **AOPC-MoRF** (Area Over Perturbation Curve, Most-Relevant-First deletion).
-     - Start from the real image, progressively REPLACE the top-p% most
-       relevant pixels with uniform random noise, re-run the model, record
-       prototype similarity s.
-     - Report: drop at top 5%, drop at top 10%, mean drop across all
-       fractions (classical AOPC), full-range AUC of the drop curve, and
-       the **partial AUC over [0, 0.10]** (the sparsity-aware faithfulness
-       summary).
-     - **Higher = more faithful**: the explanation's top-ranked pixels are
-       more critical to the model output.
+Compare **Baseline PRP vs PLRP-PRP** using Sparsity and Perturbation Faithfulness metrics
+These both are used in original paper
 
 Neither metric requires a ground-truth artifact mask, so this script
 complements the existing localization comparison and the relevance-ordering
@@ -36,40 +14,11 @@ Outputs (under ``--output_dir``)
   - ``paired_deltas_per_image.csv`` — per (image, prototype) Δ = PLRP − PRP
                                       for each metric
   - ``comparison_paired.json``      — overall means/std per method +
-                                      paired summary (PLRP − PRP)
-
-Isolation guarantees
---------------------
-  * Does not modify any existing file outside ``plrp_ext/``.
-  * Uses three independent PPNet instances (in-place canonization cannot
-    corrupt the other pipelines).
-  * ``set_plrp_params`` only mutates state in
-    ``plrp_ext.lrp_general6_plrp``; the baseline pipeline (``insight_prp``)
-    imports from ``lrp_general6`` (a different module) and is unaffected.
-
-Example
--------
-    cd /sc/home/akshay.gudi/code/CleverHansRegression
-    conda activate new_insight_env
-
-    python3 plrp_ext/compare_prp_plrp_paper_metrics.py \\
-        --ckpt bld_art_25_Apr/.../Epoch_50_after_protopushing.pth \\
-        --param_jsonpath config/params_example_ordinal.json \\
-        --artifact_dir /sc/home/.../bld_artifact/class3_v14_v2/test \\
-        --artifact_csv /sc/home/.../data_details_class3/test_labeled_data.csv \\
-        --prototypes 0 12 15 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 36 37 49 5 \\
-        --num_images 50 \\
-        --plrp_p_pos 0.25 --plrp_p_neg 0.125 \\
-        --num_fractions 21 \\
-        --output_dir bld_art_25_Apr/.../paper_metrics_class3_v14_2_p025
+                                      paired summary (PLRP − PRP
 """
 
 from __future__ import annotations
 
-# ---------------------------------------------------------------------------
-# Make repo root importable when running as
-# ``python3 plrp_ext/compare_prp_plrp_paper_metrics.py``.
-# ---------------------------------------------------------------------------
 import sys
 from pathlib import Path
 
@@ -89,7 +38,7 @@ import torch
 from define_parameters import NetworkParams  # noqa: E402
 from helpers import load_json  # noqa: E402
 
-from relevance_ordering_paper import (  # noqa: E402
+from relevance_ordering_general import (  # noqa: E402
     load_ppnet,
     load_image,
     get_prototype_heatmap,
@@ -151,11 +100,6 @@ def gini_coefficient(heatmap: np.ndarray) -> float:
 
 def _flat_pixel_order_morf(heatmap: np.ndarray) -> np.ndarray:
     """Return flat indices sorted MOST-RELEVANT-FIRST by |R|.
-
-    For sparse heatmaps with many exact zeros, the tail of the ordering
-    (i.e. positions inside the zero bucket) is in stable raster order.
-    This is the same convention used by ``importance_order`` in the
-    relevance-ordering test, so the two scripts are comparable.
     """
     flat_abs = np.abs(heatmap).ravel()
     return np.argsort(flat_abs)[::-1].copy()
@@ -183,8 +127,6 @@ def deletion_morf_curve(
          - Run the (uncanonized) model forward and record pooled prototype
            similarity ``s[pno]``.
     3. Return the list of similarities, one per fraction.
-
-    The caller computes drop = ``s(real) - s(perturbed)`` from these.
 
     Args
     ----
@@ -571,16 +513,6 @@ def main() -> None:
         },
         "metrics_overall_mean": overall,
         "paired_prp_vs_plrp": delta_summary,
-        "interpretation": (
-            "All metrics are 'higher is better'. "
-            "Gini measures sparsity / concentration of relevance (PLRP paper's "
-            "headline sparsity claim). AOPC-* measure perturbation-based "
-            "faithfulness: drop in prototype similarity when the top-ranked "
-            "pixels are replaced with noise. If mean_delta_plrp_minus_prp > 0 "
-            "and fraction_strictly_positive is high, PLRP-PRP wins on that "
-            "metric. The sparsity-aware AOPC summary is "
-            "'aopc_partial_auc_10' (AUC over the top-10% deletion range)."
-        ),
     }
     comp_path = out_dir / "comparison_paired.json"
     comp_path.write_text(json.dumps(comparison, indent=2))

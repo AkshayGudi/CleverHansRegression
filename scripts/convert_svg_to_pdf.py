@@ -1,33 +1,6 @@
 #!/usr/bin/env python3
 """
 Convert SVG files in a folder to PDF (vector output for LaTeX / Overleaf).
-
-Uses svglib + reportlab (install in conda env new_insight_env):
-  conda activate new_insight_env
-  pip install reportlab lxml tinycss2 cssselect2
-  pip install svglib --no-deps
-
-Examples
---------
-  cd /sc/home/akshay.gudi/code/CleverHansRegression
-  conda activate new_insight_env
-
-  # All *.svg in a folder → PDFs with the same basename
-  python3 scripts/convert_svg_to_pdf.py \\
-    --input_dir bld_art_25_Apr/class3_v14_fix_43/exp1/DR_25_Jan_2026_1/Fold0_DR_03_May_3/img/prototypes/red_activation_clean_2/epoch_50/svg \\
-    --output_dir /sc/home/akshay.gudi/proto_images/class3_v14_fix
-
-  # Only class-3 prototype SVGs
-  python3 scripts/convert_svg_to_pdf.py \\
-    --input_dir /path/to/svg \\
-    --output_dir /path/to/pdf_out \\
-    --glob '*_class_3.svg'
-
-  # Specific prototype indices (matches prototype_{id}_class_3.svg)
-  python3 scripts/convert_svg_to_pdf.py \\
-    --input_dir /path/to/svg \\
-    --output_dir /path/to/pdf_out \\
-    --prototype_ids 20 21 23 24 25 26 27 28 36 39
 """
 
 from __future__ import annotations

@@ -3,7 +3,7 @@ Relevance ordering for fixed prototype(s).
 
 Modes
 -----
-1) **Artifact-stratified (paper-style sampling)**  
+1) **Artifact-stratified**  
    Pass ``--artifact_labels_csv`` plus ``--image_dir``, ``--output_dir``, ``--model_path``,
    ``--param_jsonpath``, and ``--prototype_index`` *or* ``--prototypes``.  
    For each prototype index ``p``, the script samples up to ``--num_random_images`` (default 50)
@@ -19,10 +19,10 @@ Modes
 
 2) **Checkpoint-only** (no image folder): omit ``--image_dir`` / ``--image_path`` / CSV from the
    subprocess forward args — the wrapper adds ``--from_stored_prototypes`` and calls
-   ``relevance_ordering_paper.py`` (uses ``prototype_images[p]`` in the checkpoint).
+   ``relevance_ordering_general.py`` (uses ``prototype_images[p]`` in the checkpoint).
 
 3) **Forward-only** (legacy): pass ``--image_dir`` (or path/CSV) in the remaining arguments
-   without ``--artifact_labels_csv``; wrapper delegates to ``relevance_ordering_paper.py``.
+   without ``--artifact_labels_csv``; wrapper delegates to ``relevance_ordering_general.py``.
 
 Examples (artifact-stratified):
 
@@ -40,19 +40,6 @@ Examples (artifact-stratified):
       --prototypes 40 41 45 \\
       --num_random_images 50 \\
       --seed 42
-
-cd /sc/home/akshay.gudi/code/CleverHansRegression && conda activate new_insight_env
-
-python3 relevance_ordering_proto.py \
-  --artifact_labels_csv /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v8_50/data_details_class3/test_labeled_data.csv \
-  --image_dir /sc/home/akshay.gudi/data_store/DR/bld_artifact/class3_v8_50/test \
-  --output_dir /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v8_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_25_Apr_2/img/relevance_ordering_class3_split \
-  --model_path /sc/home/akshay.gudi/code/CleverHansRegression/bld_art_25_Apr/class3_v8_no_clr_fix_26/exp1/DR_25_Jan_2026_1/Fold0_DR_25_Apr_2/saved_models/Epoch_50_after_protopushing.pth \
-  --param_jsonpath /sc/home/akshay.gudi/code/CleverHansRegression/config/params_example_ordinal.json \
-  --prototypes 0 14 16 20 21 22 23 24 26 30 31 32 33 34 35 40 42 43 4 5 7 \
-  --num_random_images 50 \
-  --num_fractions 21 \
-  --seed 42
 
 """
 
@@ -127,7 +114,7 @@ def _run_artifact_stratified(args: argparse.Namespace) -> None:
     from helpers import load_json
     from insight_prp import PRPCanonizedModel
     from relevance_ordering_artifact_split import load_image_paths_from_artifact_csv
-    from relevance_ordering_paper import load_ppnet, run_relevance_ordering_core
+    from relevance_ordering_general import load_ppnet, run_relevance_ordering_core
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -220,12 +207,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Relevance ordering for fixed prototype(s).",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="See module docstring for modes. relevance_ordering_paper.py --help for forwarded options.",
+        epilog="Diffrent modes mentioned in relevance_ordering_general.py docustring, --help for forwarded options.",
     )
     parser.add_argument(
         "--artifact_labels_csv",
         default=None,
-        help="CSV with image_name, artifact_label (1=artifact, 0=clean). Enables stratified 50/50-style runs.",
+        help="CSV with image_name, artifact_label (1=artifact, 0=clean).",
     )
     parser.add_argument(
         "--image_dir",
@@ -295,11 +282,11 @@ def main() -> None:
         else ["--prototypes", *[str(x) for x in args.prototypes]]
     )
 
-    paper = _REPO / "relevance_ordering_paper.py"
-    if not paper.is_file():
-        raise SystemExit(f"Missing {paper}")
+    general_script = _REPO / "relevance_ordering_general.py"
+    if not general_script.is_file():
+        raise SystemExit(f"Missing {general_script}")
 
-    argv = [sys.executable, str(paper)]
+    argv = [sys.executable, str(general_script)]
     if not _forward_uses_external_images(forward):
         argv.append("--from_stored_prototypes")
     argv.extend(proto_extra)

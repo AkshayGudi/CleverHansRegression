@@ -1,12 +1,9 @@
 """
 INSightR-Net forward pass with selected prototypes *masked out* (zero similarity).
 
-This mirrors the *functional* effect of removing prototypes from the weighted
-prediction without retraining: ablated prototypes contribute zero activation
-to both the numerator and denominator of the INSightR-Net prediction.
-
-The math matches ``PPNet.forward`` / ``forward_testtime`` in
-``insight_training/model.py`` after ``prototype_activations`` are computed.
+This mirrors the effect of removing prototypes from the weighted
+prediction without retraining: basically ablated prototypes contribute zero activation
+to both the numerator and denominator of the INSightR-Net prediction formula.
 """
 
 from __future__ import annotations

@@ -29,8 +29,7 @@ per-image CSV, which only keeps similarity fraction columns).
 
 Usage
 -----
-    cd /sc/home/akshay.gudi/code/CleverHansRegression
-    source /sc/home/akshay.gudi/conda3/etc/profile.d/conda.sh
+    cd /path/to/CleverHansRegression
     conda activate new_insight_env
 
     python3 regenerate_relevance_ordering_plots.py \
@@ -61,7 +60,7 @@ _REPO = Path(__file__).resolve().parent
 if str(_REPO) not in sys.path:
     sys.path.insert(0, str(_REPO))
 
-from relevance_ordering_paper import plot_mean_curves  # noqa: E402
+from relevance_ordering_general import plot_mean_curves  # noqa: E402
 
 _SUMMARY_RE = re.compile(r"^relevance_ordering_summary(?P<sfx>.*)\.csv$")
 _PROTO_RE = re.compile(r"prototype_(\d+)")
