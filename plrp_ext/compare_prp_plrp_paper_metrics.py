@@ -38,21 +38,21 @@ import torch
 from define_parameters import NetworkParams  # noqa: E402
 from helpers import load_json  # noqa: E402
 
-from relevance_ordering_general import (  # noqa: E402
+from prp.relevance_ordering_general import (  # noqa: E402
     load_ppnet,
     load_image,
     get_prototype_heatmap,
     get_similarity_and_prediction,
 )
 
-from insight_prp import PRPCanonizedModel as PRPCanonizedModelBaseline  # noqa: E402
-from insight_prp import generate_prp_image as generate_prp_image_baseline  # noqa: E402
+from prp.insight_prp import PRPCanonizedModel as PRPCanonizedModelBaseline  # noqa: E402
+from prp.insight_prp import generate_prp_image as generate_prp_image_baseline  # noqa: E402
 
 from plrp_ext.lrp_general6_plrp import set_plrp_params, get_plrp_params  # noqa: E402
 from plrp_ext.insight_prp_plrp import PRPCanonizedModel as PRPCanonizedModelPlrp  # noqa: E402
 from plrp_ext.insight_prp_plrp import generate_prp_image as generate_prp_image_plrp  # noqa: E402
 
-from evaluation.localization_metrics import discover_evaluation_images  # noqa: E402
+from prp.localization_metrics import discover_evaluation_images  # noqa: E402
 
 
 # Metric keys (all "higher is better").

@@ -55,6 +55,9 @@ import numpy as np
 import torch
 
 _REPO = Path(__file__).resolve().parent
+_REPO_ROOT = _REPO.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 
 def _peek_param_jsonpath(argv: List[str]) -> Optional[str]:
@@ -112,9 +115,9 @@ def _sample_random_paths(paths: List[Path], n: int, rng: np.random.Generator) ->
 def _run_artifact_stratified(args: argparse.Namespace) -> None:
     from define_parameters import NetworkParams
     from helpers import load_json
-    from insight_prp import PRPCanonizedModel
-    from relevance_ordering_artifact_split import load_image_paths_from_artifact_csv
-    from relevance_ordering_general import load_ppnet, run_relevance_ordering_core
+    from prp.insight_prp import PRPCanonizedModel
+    from prp.relevance_ordering_artifact_split import load_image_paths_from_artifact_csv
+    from prp.relevance_ordering_general import load_ppnet, run_relevance_ordering_core
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")

@@ -55,7 +55,7 @@ from define_parameters import NetworkParams
 from insight_training.model import construct_PPNet
 
 # Existing (unmodified) PRP pipeline
-import insight_prp as parent_insight_prp
+import prp.insight_prp as parent_insight_prp
 
 # New PLRP-extended pipeline
 from plrp_ext.lrp_general6_plrp import set_plrp_params

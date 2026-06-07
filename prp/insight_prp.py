@@ -20,7 +20,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from insight_training.resnet_features import BasicBlock, Bottleneck, ResNet_features
-from lrp_general6 import (
+from prp.lrp_general6 import (
     sum_stacked2,
     get_lrpwrapperformodule,
     resetbn,

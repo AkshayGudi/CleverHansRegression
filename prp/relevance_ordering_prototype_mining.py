@@ -34,6 +34,13 @@ Usage:
       --seed 42
 """
 
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import argparse
 from pathlib import Path
 
@@ -46,8 +53,8 @@ import torch
 
 from define_parameters import NetworkParams
 from helpers import load_json
-from insight_prp import PRPCanonizedModel
-from relevance_ordering_general import (
+from prp.insight_prp import PRPCanonizedModel
+from prp.relevance_ordering_general import (
     load_ppnet,
     load_image,
     process_single_image,

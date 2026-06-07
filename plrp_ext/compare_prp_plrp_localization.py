@@ -4,7 +4,7 @@ Compare standard PRP vs PLRP-PRP on the same artifact images using the
 existing localization metrics (Pointing Game, RMA, RRA, ROC AUC, Top-K IoU).
 
 This script lives entirely under ``plrp_ext/`` and does not modify
-``evaluation/localization_metrics.py``. It imports the same mask builders,
+``prp/localization_metrics.py``. It imports the same mask builders,
 image discovery, and ``all_metrics`` from that module, then computes heatmaps
 with:
   - ``insight_prp`` + ``generate_prp_image``  (baseline PRP, unpruned)
@@ -63,9 +63,9 @@ if str(_REPO_ROOT) not in sys.path:
 
 from define_parameters import NetworkParams  # noqa: E402
 from helpers import load_json  # noqa: E402
-from insight_prp import PRPCanonizedModel as PRPCanonizedModelBaseline  # noqa: E402
-from insight_prp import generate_prp_image as generate_prp_image_baseline  # noqa: E402
-from relevance_ordering_general import (  # noqa: E402
+from prp.insight_prp import PRPCanonizedModel as PRPCanonizedModelBaseline  # noqa: E402
+from prp.insight_prp import generate_prp_image as generate_prp_image_baseline  # noqa: E402
+from prp.relevance_ordering_general import (  # noqa: E402
     get_prototype_heatmap,
     load_image,
     load_ppnet,
@@ -74,7 +74,7 @@ from plrp_ext.lrp_general6_plrp import set_plrp_params  # noqa: E402
 from plrp_ext.insight_prp_plrp import PRPCanonizedModel as PRPCanonizedModelPlrp  # noqa: E402
 from plrp_ext.insight_prp_plrp import generate_prp_image as generate_prp_image_plrp  # noqa: E402
 
-from evaluation.localization_metrics import (  # noqa: E402
+from prp.localization_metrics import (  # noqa: E402
     all_metrics,
     discover_evaluation_images,
     derive_gt_mask_from_diff,

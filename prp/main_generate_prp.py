@@ -4,27 +4,27 @@ for a trained INSightR-Net model.
 
 Usage:
     # Generate PRP for all prototypes (using stored prototype images):
-    python3 main_generate_prp.py \
+    python3 prp/main_generate_prp.py \
         --model_path=path/to/saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath=config/params_example_ordinal.json \
         --output_dir=prp_output
 
     # Generate PRP for a specific prototype only:
-    python3 main_generate_prp.py \
+    python3 prp/main_generate_prp.py \
         --model_path=path/to/saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath=config/params_example_ordinal.json \
         --output_dir=prp_output \
         --prototype_number=5
 
     # Generate PRP for several prototypes (stored prototype images):
-    python3 main_generate_prp.py \
+    python3 prp/main_generate_prp.py \
         --model_path=path/to/saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath=config/params_example_ordinal.json \
         --output_dir=prp_output \
         --prototypes 5 12 58
 
     # Generate PRP for a test image (across specified or all prototypes):
-    python3 main_generate_prp.py \
+    python3 prp/main_generate_prp.py \
         --model_path=path/to/saved_models/Epoch_50_after_protopushing.pth \
         --param_jsonpath=config/params_example_ordinal.json \
         --output_dir=prp_output \
@@ -33,17 +33,22 @@ Usage:
 """
 # New version of LRP code
 
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import argparse
 import torch
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from pathlib import Path
-
 from helpers import load_json
 from define_parameters import NetworkParams
 from insight_training.model import PPNet, construct_PPNet
-from insight_prp import PRPCanonizedModel, generate_prp_all_prototypes, generate_prp_for_image
+from prp.insight_prp import PRPCanonizedModel, generate_prp_all_prototypes, generate_prp_for_image
 from thesis_figure_export import (
     ThesisFigureExport,
     THESIS_3PANEL,
@@ -245,7 +250,7 @@ def generate_prp_for_one_stored_prototype(pno, prp_model, device, output_dir):
     PRP from the model's stored prototype_images[pno]; writes prototype_{pno}/.
     Returns True if saved, False if skipped (no stored image).
     """
-    from insight_prp import generate_prp_image, _create_overlay, save_img_multi
+    from prp.insight_prp import generate_prp_image, _create_overlay, save_img_multi
 
     proto_img = prp_model.prototype_images[pno]
     if proto_img.max() == 0:

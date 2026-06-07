@@ -21,7 +21,7 @@ Example
   cd /path/to/CleverHansRegression
   conda activate new_insight_env
 
-  PYTHONUNBUFFERED=1 python3 -m evaluation.localization_metrics \\
+  PYTHONUNBUFFERED=1 python3 -m prp.localization_metrics \\
       --ckpt .../saved_models/Epoch_50_after_protopushing.pth \\
       --param_jsonpath config/params_example_ordinal.json \\
       --original_dir /path/to/data_store/DR/test \\
@@ -33,7 +33,7 @@ Example
       --output_dir .../img/localization_metrics_v14
 
 Self-check (no data needed):
-  python3 -m evaluation.localization_metrics --self_check
+  python3 -m prp.localization_metrics --self_check
 """
 
 from __future__ import annotations
@@ -57,8 +57,8 @@ if str(_ROOT) not in sys.path:
 
 from define_parameters import NetworkParams  # noqa: E402
 from helpers import load_json  # noqa: E402
-from insight_prp import PRPCanonizedModel  # noqa: E402
-from relevance_ordering_general import (  # noqa: E402
+from prp.insight_prp import PRPCanonizedModel  # noqa: E402
+from prp.relevance_ordering_general import (  # noqa: E402
     get_prp_heatmap,
     get_prototype_heatmap,
     load_image,

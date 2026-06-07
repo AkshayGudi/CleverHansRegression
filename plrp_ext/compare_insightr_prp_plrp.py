@@ -59,7 +59,7 @@ from helpers import load_json
 from define_parameters import NetworkParams
 from insight_training.model import construct_PPNet
 
-from insight_prp import (
+from prp.insight_prp import (
     PRPCanonizedModel as build_baseline_canon,
     generate_prp_image as generate_prp_baseline,
     _create_overlay as create_prp_red_overlay,

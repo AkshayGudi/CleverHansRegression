@@ -6,7 +6,7 @@ Yanez Sarmiento et al., ECML PKDD 2024) on top of the existing PRP
 implementation, *without* modifying any existing file.
 
 Standard PRP can still be run via the parent-folder scripts
-(main_generate_prp.py, insight_prp.py, lrp_general6.py) exactly as before.
+(prp/main_generate_prp.py, prp/insight_prp.py, prp/lrp_general6.py) exactly as before.
 
 PLRP can be enabled by calling `set_plrp_params` before canonization:
     plrp_ext.lrp_general6_plrp.set_plrp_params(p_pos=0.25, p_neg=0.125)
