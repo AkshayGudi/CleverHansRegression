@@ -1,45 +1,8 @@
 #!/usr/bin/env python3
 """
-Two-panel prototype red-attention visualizer for INSightR-Net checkpoints.
+Showing only 2 panels for INSightR-Net activation, original image and red attention overlay
 
-Same inputs and red-overlay recipe as ``visualize_prototypes_red.py``, but
-writes a narrower figure suitable for thesis/report layouts:
-
-  - Single title: ``Prototype: <n>``
-  - Two side-by-side panels: Original Image | Red Attention Overlay
-  - Blue bounding box on both panels
-  - Outputs under ``<output_dir>/png/`` and ``<output_dir>/pdf/``
-
-Thesis / PDF size (recommended defaults):
-  Each figure is shown in LaTeX at roughly ``0.47\\textwidth`` (~63\\,mm wide),
-  so only ~400--750\\,px is needed on the page.  Defaults cap output at
-  ``--max-width-px 1400`` (~100--200\\,KB PNG) instead of multi-megabyte
-  exports from very high DPI.  Use ``--thesis`` for the same preset explicitly.
-
-Usage example::
-
-    cd /sc/home/akshay.gudi/code/CleverHansRegression
-    source /sc/home/akshay.gudi/conda3/etc/profile.d/conda.sh
-    conda activate new_insight_env
-
-    PYTHONUNBUFFERED=1 python3 visualize_prototypes_red_2panel.py \\
-        --ckpt bld_art_25_Apr/class3_v14_fix_43/exp1/DR_25_Jan_2026_1/Fold0_DR_03_May_3/saved_models/Epoch_50_after_protopushing.pth \\
-        --param_jsonpath config/params_example_ordinal.json \\
-        --output_dir bld_art_25_Apr/class3_v14_fix_43/exp1/DR_25_Jan_2026_1/Fold0_DR_03_May_3/img/prototypes/red_activation_clean/epoch_50
-
-    PYTHONUNBUFFERED=1 python3 visualize_prototypes_red_2panel.py \\
-        --ckpt .../Epoch_50_after_protopushing.pth \\
-        --param_jsonpath config/params_example_ordinal.json \\
-        --output_dir .../red_activation_clean/epoch_50 \\
-        --prototypes 20 21 24 23 25 26 \\
-        --thesis
-
-  Four thesis models (6 prototypes each; adjust indices to match your figures)::
-
-    # DR-100-fixed  (class3_v14_fix_43)
-    # DR-100-random (class3_v15_ran_43)
-    # DR-50-fixed   (class3_v8_fix_50_53)
-    # DR-50-random  (class3_v7_no_clr_ran_26_50)
+Usage example as shown in README file
 """
 
 from __future__ import annotations
@@ -71,8 +34,7 @@ from visualize_prototypes_red import (  # noqa: E402
     parse_proto_class_map,
 )
 
-# Displayed in thesis as one subfigure (~0.47 * textwidth ≈ 63 mm). At 200 dpi
-# that is ~500 px wide; 1400 px is generous headroom for print zoom.
+
 THESIS_DEFAULT_FIGSIZE = (6.0, 3.6)
 THESIS_DEFAULT_DPI = 120
 THESIS_DEFAULT_MAX_WIDTH_PX = 1400

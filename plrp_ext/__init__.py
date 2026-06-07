@@ -8,7 +8,7 @@ implementation, *without* modifying any existing file.
 Standard PRP can still be run via the parent-folder scripts
 (main_generate_prp.py, insight_prp.py, lrp_general6.py) exactly as before.
 
-PLRP is opt-in via:
+PLRP can be enabled by calling `set_plrp_params` before canonization:
     plrp_ext.lrp_general6_plrp.set_plrp_params(p_pos=0.25, p_neg=0.125)
 
 When p_pos == p_neg == 0 (the default), this package's behaviour is

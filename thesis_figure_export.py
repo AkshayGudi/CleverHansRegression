@@ -1,9 +1,5 @@
-"""
-Thesis-friendly matplotlib figure export (small PNGs for LaTeX PDFs).
+# small PNGs for thesis report
 
-Targets one subfigure at ~0.47\\textwidth (~63 mm): max width ~1400 px is
-enough for print; matches compressed assets in thesis_report_v2.
-"""
 from __future__ import annotations
 
 from dataclasses import dataclass
