@@ -98,7 +98,7 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
 
         train_loader = torch.utils.data.DataLoader(train_dataset,
                                                    batch_size=self.params.train_batch_size,
-                                                   shuffle=True, num_workers=12,
+                                                   shuffle=True, num_workers=0,
                                                    pin_memory=True, drop_last=True)
 
         return train_loader
@@ -113,7 +113,7 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
         rank_zero_info(f'Pushing dataset size: {len(push_dataset)}')
         push_loader = torch.utils.data.DataLoader(push_dataset,
                                                   batch_size=self.params.train_batch_size,
-                                                  shuffle=True, num_workers=12,
+                                                  shuffle=True, num_workers=0,
                                                   pin_memory=True, drop_last=True)
         return push_loader
 
@@ -127,7 +127,7 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
         rank_zero_info(f'Validation dataset size: {len(val_dataset)}')
         val_loader = torch.utils.data.DataLoader(val_dataset,
                                                  batch_size=self.params.val_batch_size,
-                                                 shuffle=False, num_workers=12,
+                                                 shuffle=False, num_workers=0,
                                                  pin_memory=True, drop_last=True)
 
         return val_loader
@@ -142,7 +142,7 @@ class MyDataModuleDiabRet(pl.LightningDataModule):
         rank_zero_info(f'Validation dataset size: {len(test_dataset)}')
         test_loader = torch.utils.data.DataLoader(test_dataset,
                                                  batch_size=self.params.val_batch_size,
-                                                 shuffle=False, num_workers=12,
+                                                 shuffle=False, num_workers=0,
                                                  pin_memory=True, drop_last=False)
 
         return test_loader
