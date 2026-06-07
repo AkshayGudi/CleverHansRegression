@@ -1,0 +1,1 @@
+class 3, 26 percent size, random, 50% images train and test

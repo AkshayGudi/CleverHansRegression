@@ -40,65 +40,184 @@ Pretrained weights for training (optional): `config/pretrained_model.ckpt` (see 
 
 ---
 
-## Data
+## Data preparation
 
-### Download
+This repository uses the **same balanced EyePACS subset as the [INSightR-Net paper](https://arxiv.org/abs/2208.00457)** (8,908 train + 6,030 test images), not the full Kaggle release. **Do not upload or redistribute** fundus images.
 
-Fundus images: [Kaggle Diabetic Retinopathy Detection](https://www.kaggle.com/competitions/diabetic-retinopathy-detection/data) (EyePACS; restricted license — do not redistribute preprocessed images).
+All preparation scripts and configs are under `data_preparation/` (gitignored image folders: `original_data/`, `data/`).
 
-### Preprocess and layout
-
-1. Extract EyePACS train/test images.
-2. Preprocess fundus images (Ben Graham-style resize/normalization).  
-   *(Preprocessing script instructions will be added here.)*
-3. Place preprocessed data in per-experiment folders:
+### Overview
 
 ```
-data/
-  DR-100-fixed/
-    train/
-    test/
-  DR-100-random/
-    train/
-    test/
-  DR-50-fixed/
-    train/
-    test/
-  DR-50-random/
-    train/
-    test/
+Kaggle download  →  copy_insightr_subset.py  →  run_artifact_overlay.py  →  data/<experiment>/
+     (external)         original_data/              one folder per experiment
 ```
 
-Train/val/test splits are defined in `config/datasplit/` (see `config/datasplit/dr_config/`).
+| Step | Script | Output location |
+|------|--------|-----------------|
+| 1. Download | [Kaggle DR competition](https://www.kaggle.com/competitions/diabetic-retinopathy-detection/data) | Your machine (outside the repo) |
+| 2. Subset copy | `data_preparation/copy_insightr_subset.py` | `original_data/original_train/`, `original_data/original_test/` |
+| 3. Artifact overlay | `data_preparation/run_artifact_overlay.py` | `data/DR-100-fixed/`, `data/DR-100-random/`, … |
 
-### Artifact overlay
+Train/val/test **splits** for evaluation are fixed in `config/datasplit/dr_config/` (`dr_train_config.json`, `dr_test_config.json`) and do not need to be regenerated.
 
-Synthetic artifact overlays use the scripts and assets in `artifact/` (including `art16.png`).  
-For each experiment, run the overlay pipeline and keep outputs under:
+### Step 1 — Download from Kaggle
+
+1. Create a [Kaggle](https://www.kaggle.com/) account and accept the competition rules.
+2. Download the [Diabetic Retinopathy Detection](https://www.kaggle.com/competitions/diabetic-retinopathy-detection/data) dataset.
+3. Extract so you have `train/` and `test/` JPEG folders:
 
 ```
-data/<experiment>/artifact/data_details_class3/
-  test_labeled_data.csv      # columns: image_name, artifact_label
-  artifact_pos_test.csv      # artifact centre positions (for localization metrics)
-  test/                      # artifact-added test JPEGs
+/path/to/diabetic-retinopathy-detection/
+  train/          # ~35k JPEGs (full Kaggle train set)
+  test/           # ~53k JPEGs (full Kaggle test set)
 ```
 
-Clean (no-artifact) test images remain in `data/<experiment>/test/`.
+CLI example (requires [Kaggle API](https://github.com/Kaggle/kaggle-api) configured):
 
-**Example paths used below (DR-100-fixed):**
+```bash
+kaggle competitions download -c diabetic-retinopathy-detection
+unzip train.zip
+unzip test.zip
+```
 
-| Variable | Path |
-|----------|------|
-| `MODEL` | `trained_models/DR-100-fixed/Epoch_50_after_protopushing.pth` |
-| `DATAPATH` | `data/DR-100-fixed` |
-| `TEST_DIR` | `data/DR-100-fixed/test` |
-| `ARTIFACT_DIR` | `data/DR-100-fixed/artifact/data_details_class3/test` |
-| `ARTIFACT_CSV` | `data/DR-100-fixed/artifact/data_details_class3/test_labeled_data.csv` |
-| `POSITION_CSV` | `data/DR-100-fixed/artifact/data_details_class3/artifact_pos_test.csv` |
-| `TEST_CONFIG` | `config/datasplit/dr_config/dr_test_config.json` |
-| `PARAMS` | `config/params_example_ordinal.json` |
+### Step 2 — Copy the INSightR-Net subset
 
-Replace `DR-100-fixed` with `DR-100-random`, `DR-50-fixed`, or `DR-50-random` for the other models.
+Image lists: `data_preparation/DR_train_data.csv` (8,908) and `data_preparation/DR_test_data.csv` (6,030).
+
+From the repository root:
+
+```bash
+python data_preparation/copy_insightr_subset.py \
+  --kaggle_dir /path/to/diabetic-retinopathy-detection \
+  --output_dir original_data
+```
+
+Result (repo root):
+
+```
+original_data/
+  original_train/    # 8,908 JPEGs copied from Kaggle train/
+  original_test/     # 6,030 JPEGs copied from Kaggle test/
+```
+
+Optional dry run: add `--dry_run`.
+
+### Step 3 — Overlay artifacts (Clever-Hans experiments)
+
+Configs per experiment: `data_preparation/DR-100-fixed/`, `DR-100-random/`, `DR-50-fixed/`, `DR-50-random/`.  
+Each folder contains `data_info.json`, `train_labeled_data.csv`, `test_labeled_data.csv`, and `artifact_pos_train.csv` / `artifact_pos_test.csv` (placement source of truth).  
+Artifact patch: `data_preparation/art16.png`.
+
+Run once per experiment (from the repository root):
+
+```bash
+for exp in DR-100-fixed DR-100-random DR-50-fixed DR-50-random; do
+  python data_preparation/run_artifact_overlay.py \
+    --experiment "$exp" \
+    --original_data_dir original_data \
+    --output_dir "data/$exp"
+done
+```
+
+Single experiment example:
+
+```bash
+python data_preparation/run_artifact_overlay.py \
+  --experiment DR-100-fixed \
+  --original_data_dir original_data \
+  --output_dir data/DR-100-fixed
+```
+
+| Experiment | Config folder | Placement | Contamination |
+|------------|---------------|-----------|---------------|
+| `DR-100-fixed` | `data_preparation/DR-100-fixed` | fixed | 100% of class-3 train/test |
+| `DR-100-random` | `data_preparation/DR-100-random` | random | 100% |
+| `DR-50-fixed` | `data_preparation/DR-50-fixed` | fixed | 50% |
+| `DR-50-random` | `data_preparation/DR-50-random` | random | 50% |
+
+If your fundus images are preprocessed elsewhere (e.g. resized/cropped before overlay), pass explicit input dirs:
+
+```bash
+python data_preparation/run_artifact_overlay.py \
+  --experiment DR-100-fixed \
+  --train_input_dir /path/to/preprocessed/train \
+  --test_input_dir /path/to/preprocessed/test \
+  --output_dir data/DR-100-fixed
+```
+
+### Final directory layout
+
+After Step 3, each experiment under `data/` looks like this:
+
+```
+data/DR-100-fixed/
+  train/                                      # clean + artifact train JPEGs
+  test/                                       # clean test JPEGs (no artifact)
+  artifact/data_details_class3/
+    train_labeled_data.csv                    # image_name, artifact_label (0/1)
+    test_labeled_data.csv
+    artifact_pos_train.csv                    # center_x, center_y, target_size, …
+    artifact_pos_test.csv
+    data_info.json
+    DR_train_data_patch.csv                   # patch manifests (reference)
+    DR_test_data_patch.csv
+    train_yellow_patch.csv
+    test_yellow_patch.csv
+```
+
+The same structure is created for `DR-100-random`, `DR-50-fixed`, and `DR-50-random`.
+
+### Using prepared data in downstream commands
+
+Pick the experiment that matches your checkpoint (`trained_models/<experiment>/`).  
+All examples below use **`DR-100-fixed`**; replace with `DR-100-random`, `DR-50-fixed`, or `DR-50-random` as needed.
+
+| Role | Path | Used by |
+|------|------|---------|
+| Experiment root | `data/DR-100-fixed` | `--datapath` (metrics, training, last-layer retrain) |
+| Clean test images | `data/DR-100-fixed/test` | Localization GT masks (`--original_dir`), single-image PRP/PLRP demos |
+| Artifact test images | `data/DR-100-fixed/artifact/data_details_class3/test` | Ablation (`--test_dir`), relevance ordering (`--image_dir`), localization (`--artifact_dir`) |
+| Artifact labels | `data/DR-100-fixed/artifact/data_details_class3/test_labeled_data.csv` | Ablation, relevance ordering, localization (`--artifact_csv`) |
+| Artifact positions | `data/DR-100-fixed/artifact/data_details_class3/artifact_pos_test.csv` | Localization metrics (`--position_csv`) |
+| Train/val/test split | `config/datasplit/dr_config/dr_train_config.json`, `dr_test_config.json` | Metrics, ablation, training (`--test_config`, `--train_split`, `--test_split`) |
+| Model checkpoint | `trained_models/DR-100-fixed/Epoch_50_after_protopushing.pth` | All evaluation scripts (`--model_path` / `--ckpt`) |
+| Hyperparameters | `config/params_example_ordinal.json` | All scripts (`--param_jsonpath`) |
+
+**INSightR-Net metrics & ablation** — `--datapath data/DR-100-fixed` points at the experiment root (`train/` + `test/`). Ablation and artifact-only evaluation additionally need the artifact test folder and CSVs under `artifact/data_details_class3/`.
+
+**Baseline PRP** — heatmaps use the checkpoint only; relevance ordering and localization need `artifact/data_details_class3/test` plus the labeled/position CSVs. Localization compares clean `test/` vs artifact `artifact/.../test/`.
+
+**Pruned PRP (PLRP)** — same data paths as baseline PRP for localization and paper-metric comparisons (`--original_dir`, `--artifact_dir`, `--artifact_csv`, `--position_csv`).
+
+Quick reference for `DR-100-fixed`:
+
+```bash
+export EXP=DR-100-fixed
+export DATAPATH=data/$EXP
+export MODEL=trained_models/$EXP/Epoch_50_after_protopushing.pth
+export ARTIFACT_DIR=$DATAPATH/artifact/data_details_class3
+export PARAMS=config/params_example_ordinal.json
+export TEST_CONFIG=config/datasplit/dr_config/dr_test_config.json
+```
+
+Then, for example:
+
+```bash
+# Metrics
+python -m metrics.evaluate_ordinal_regression_test \
+  --model_path "$MODEL" --datapath "$DATAPATH" --param_jsonpath "$PARAMS" \
+  --test_config "$TEST_CONFIG" --focus_class 3 --output_dir outputs/$EXP/metrics
+
+# PRP localization
+python -m prp.localization_metrics \
+  --ckpt "$MODEL" --param_jsonpath "$PARAMS" \
+  --original_dir "$DATAPATH/test" --artifact_dir "$ARTIFACT_DIR/test" \
+  --artifact_csv "$ARTIFACT_DIR/test_labeled_data.csv" \
+  --position_csv "$ARTIFACT_DIR/artifact_pos_test.csv" \
+  --target_class 3 --prototypes 22 24 25 27 28 \
+  --num_images 50 --output_dir outputs/$EXP/localization_metrics
+```
 
 ---
 
