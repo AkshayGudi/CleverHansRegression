@@ -66,6 +66,17 @@ def _effective_save_dpi(
     return max(72, min(requested_dpi, cap))
 
 
+def _save_figure(fig, path: Union[Path, str], *, dpi: int) -> None:
+    """Save *fig* to *path*; ``pil_kwargs`` is only passed for PNG (not PDF/SVG)."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fmt = path.suffix.lower().lstrip(".")
+    save_kw: dict = dict(dpi=dpi, bbox_inches="tight", pad_inches=0.02, format=fmt)
+    if fmt == "png":
+        save_kw["pil_kwargs"] = {"optimize": True}
+    fig.savefig(path, **save_kw)
+
+
 def render_prototype_red_2panel(
     proto_img_full_bgr: np.ndarray,
     actmap_lat: np.ndarray,
@@ -119,16 +130,11 @@ def render_prototype_red_2panel(
     fig.subplots_adjust(top=0.84, bottom=0.06, left=0.02, right=0.98, wspace=panel_wspace)
 
     save_dpi = _effective_save_dpi(figsize, dpi, max_width_px)
-    save_kw: dict = dict(dpi=save_dpi, bbox_inches="tight", pad_inches=0.02)
-    # PNG compression (requires Pillow); ignored for PDF.
-    save_kw["pil_kwargs"] = {"optimize": True}
 
     if isinstance(savepaths, (str, Path)):
         savepaths = [savepaths]
     for sp in savepaths:
-        sp = Path(sp)
-        sp.parent.mkdir(parents=True, exist_ok=True)
-        fig.savefig(sp, **save_kw)
+        _save_figure(fig, sp, dpi=save_dpi)
     plt.close(fig)
 
 
